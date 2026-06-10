@@ -12,8 +12,7 @@
         "start": "astro dev",
         "sync-spec": "node scripts/sync-spec.mjs",
         "generate-llms-txt": "node scripts/generate-llms-txt.mjs",
-        "prebuild": "node scripts/sync-spec.mjs && node scripts/generate-llms-txt.mjs",
-        "build": "astro build",
+        "build": "npm run sync-spec && npm run generate-llms-txt && astro build",
         "preview": "astro preview"
     },
     "dependencies": {

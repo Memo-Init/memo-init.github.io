@@ -1,0 +1,46 @@
+---
+title: memo-init
+description: Memo-driven, agentic software engineering — guardrails first, an inductive RFC-style specification.
+template: splash
+hero:
+  title: memo-init
+  tagline: Memo-driven, agentic software engineering. Guardrails first — an inductive RFC-style specification that turns dictated transcripts into executable work orders.
+  actions:
+    - text: Read the Specification
+      link: /specification/overview/
+      icon: right-arrow
+      variant: primary
+    - text: View on GitHub
+      link: https://github.com/memo-init
+      icon: external
+      variant: minimal
+---
+
+## Mission
+
+memo-init transforms long, unstructured input — typically dictated voice transcripts — into discrete,
+executable work orders, and governs the human-AI interaction that clarifies open questions **before**
+implementation begins. The developer plans; the AI implements autonomously and self-evaluating.
+
+A **memo** is a versioned strategy document. It starts as a first revision, iterates through revisions
+until the developer finalizes it, and then drives a rollout that produces real artifacts — code,
+repositories, documentation. The memo is the single highest authority over its own rollout.
+
+The specification is **inductive**: it is reverse-engineered from a real, working system and written in
+the normative style of an RFC (MUST / SHOULD / MAY, per BCP 14). Guardrails come first — plan before you
+build, keep context clean, never delete, always leave an audit trail.
+
+## What's inside
+
+- **Specification** — the core RFC-style chapters: input paths, the five-step pipeline, memo strategies, revisions, phases & PRDs, rollout, orchestration, git & security.
+- **Workbench** — the sub-spec for the meta-orchestration layer: project structure, requirements profiles, the tools registry, strands, wikis, and the no-deletion trash policy.
+- **Viewer** — the live memo editor and transcript surface.
+- **Prompt generator** — the validated engine that turns memo structure into agent prompts.
+- **Core** — the underlying skills, agents, and task machinery.
+- **Website** — this site, built from the spec payload, also served as `/llms.txt` for machines.
+
+## Next steps
+
+- Start with the [Specification Overview](/specification/overview/).
+- Browse the [Workbench sub-spec](/workbench/overview/).
+- Read the machine-friendly index at [`/llms.txt`](/llms.txt).
