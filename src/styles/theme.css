@@ -1,0 +1,30 @@
+/*
+ * memo-init theme — clearer accent palette (teal), replaces Starlight's
+ * default purple accent. Hex values are contrast-checked against WCAG AA
+ * (>= 4.5:1 for body/link text) in BOTH light and dark mode.
+ *
+ * Verified ratios (see PRD-003 Validation step 3):
+ *   light: accent #0d6e6e on #ffffff      -> 6.05:1  (AA pass)
+ *          accent-high #0a5757 on #ffffff  -> 8.35:1  (AA pass)
+ *          white text on accent button bg  -> 6.05:1  (AA pass)
+ *   dark:  accent #5ee0d6 on #17181c       -> 11.07:1 (AA pass)
+ *          accent-high #8af0e8 on #17181c   -> 13.27:1 (AA pass)
+ *          dark text on accent button bg    -> 11.07:1 (AA pass)
+ *
+ * accent-low is a subtle surface/badge tint (not text) and is intentionally
+ * light/desaturated; it is not held to the 4.5:1 text threshold.
+ */
+
+/* Light mode (Starlight default theme) */
+:root {
+    --sl-color-accent-low: #c4ecea;
+    --sl-color-accent: #0d6e6e;
+    --sl-color-accent-high: #0a5757;
+}
+
+/* Dark mode */
+:root[data-theme='dark'] {
+    --sl-color-accent-low: #11302f;
+    --sl-color-accent: #5ee0d6;
+    --sl-color-accent-high: #8af0e8;
+}

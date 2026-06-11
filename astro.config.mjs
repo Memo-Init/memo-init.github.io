@@ -21,6 +21,13 @@ export default defineConfig({
     integrations: [
         starlight({
             title: 'memo-init',
+            logo: {
+                src: './src/assets/logo.svg',
+                replacesTitle: false
+            },
+            customCss: [
+                './src/styles/theme.css'
+            ],
             social: [
                 { icon: 'github', label: 'GitHub', href: 'https://github.com/memo-init' }
             ],
