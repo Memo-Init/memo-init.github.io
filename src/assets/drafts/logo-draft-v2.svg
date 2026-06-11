@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 188 40" role="img" aria-label="memo-init" fill="none">
+  <title>memo-init</title>
+  <!--
+    memo-init wordmark — v2 DRAFT (S/W, monochrome).
+    Black & white discussion basis per decision B1.
+    Concept: glyph-focused — a memo sheet carrying three revision lines,
+    closed by a checkmark (the rollout). Iterate, iterate, iterate, ship.
+    currentColor is used throughout so the logo follows Starlight light/dark theme.
+  -->
+  <g stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round">
+    <!-- memo sheet -->
+    <path d="M7 6 a2 2 0 0 1 2 -2 h18 a2 2 0 0 1 2 2 v28 a2 2 0 0 1 -2 2 H9 a2 2 0 0 1 -2 -2 Z" />
+    <!-- three revision lines (each pass slightly shorter) -->
+    <path d="M12 11 h12" />
+    <path d="M12 17 h10" />
+    <path d="M12 23 h8" />
+    <!-- rollout checkmark -->
+    <path d="M12 29.5 l3.5 3.5 l8.5 -8" />
+  </g>
+  <!-- wordmark: editable text, monospace stack to echo the doc-chrome / CLI feel -->
+  <text x="44" y="27"
+        font-family="ui-monospace, 'SFMono-Regular', 'JetBrains Mono', Menlo, Consolas, monospace"
+        font-size="22" font-weight="600" letter-spacing="-0.4"
+        fill="currentColor">memo<tspan font-weight="400" fill="currentColor">-init</tspan></text>
+</svg>

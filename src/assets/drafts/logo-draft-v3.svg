@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 188 40" role="img" aria-label="memo-init" fill="none">
+  <title>memo-init</title>
+  <!--
+    memo-init wordmark — v3 DRAFT (S/W, monochrome).
+    Black & white discussion basis per decision B1.
+    Concept: monogram — a monoline "m" wrapped in square brackets, [m],
+    echoing CLI flags and spec notation. Wordmark beside it.
+    currentColor is used throughout so the logo follows Starlight light/dark theme.
+  -->
+  <g stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round">
+    <!-- square brackets, CLI/spec aesthetic -->
+    <path d="M11 6 H6 v28 h5" />
+    <path d="M29 6 h5 v28 h-5" />
+    <!-- monoline "m" monogram -->
+    <path d="M13 29 V21 a3 3 0 0 1 3 -3 h1 a3 3 0 0 1 3 3 v8 M20 21 a3 3 0 0 1 3 -3 h1 a3 3 0 0 1 3 3 v8" />
+  </g>
+  <!-- wordmark: editable text, monospace stack to echo the doc-chrome / CLI feel -->
+  <text x="44" y="27"
+        font-family="ui-monospace, 'SFMono-Regular', 'JetBrains Mono', Menlo, Consolas, monospace"
+        font-size="22" font-weight="600" letter-spacing="-0.4"
+        fill="currentColor">memo<tspan font-weight="400" fill="currentColor">-init</tspan></text>
+</svg>
