@@ -1,0 +1,98 @@
+---
+// Custom mobile menu toggle — ported from FlowMCP MobileMenuToggle.astro (Memo 003, Kap 6).
+// Deltas vs. template: 'flowmcp:close-all' listener removed (FlowMCP-specific
+// search keyboard integration, returns with the Pagefind fixes in Phase 4);
+// var() fallback literals updated to the memo-init token values (no FlowMCP
+// babyblue hardcoded — PRD-004 Validation 6).
+import { Icon } from '@astrojs/starlight/components';
+---
+
+<starlight-menu-button class="print:hidden">
+    <button
+        aria-expanded="false"
+        aria-label={Astro.locals.t('menuButton.accessibleLabel')}
+        aria-controls="starlight__sidebar"
+        class="sl-flex md:sl-hidden"
+    >
+        <Icon name="bars" class="open-menu" />
+        <Icon name="close" class="close-menu" />
+    </button>
+</starlight-menu-button>
+
+<script>
+    class StarlightMenuButton extends HTMLElement {
+        btn: HTMLButtonElement;
+
+        constructor() {
+            super();
+            this.btn = this.querySelector('button')!;
+            this.btn.addEventListener('click', () => this.toggleExpanded());
+
+            const parentNav = this.closest('nav');
+            if (parentNav) {
+                parentNav.addEventListener('keyup', (e) => this.closeOnEscape(e as KeyboardEvent));
+            }
+        }
+
+        setExpanded(expanded: boolean) {
+            this.setAttribute('aria-expanded', String(expanded));
+            document.body.toggleAttribute('data-mobile-menu-expanded', expanded);
+        }
+
+        toggleExpanded() {
+            this.setExpanded(this.getAttribute('aria-expanded') !== 'true');
+        }
+
+        closeOnEscape(e: KeyboardEvent) {
+            if (e.code === 'Escape') {
+                this.setExpanded(false);
+                this.btn.focus();
+            }
+        }
+    }
+
+    customElements.define('starlight-menu-button', StarlightMenuButton);
+</script>
+
+<style>
+    button {
+        position: fixed;
+        top: calc((var(--sl-nav-height) - var(--sl-menu-button-size)) / 2);
+        inset-inline-start: var(--sl-nav-pad-x);
+        inset-inline-end: auto;
+        z-index: var(--sl-z-index-navbar);
+        border: 1px solid var(--border, #30363d);
+        border-radius: 8px;
+        width: var(--sl-menu-button-size);
+        height: var(--sl-menu-button-size);
+        padding: 0.5rem;
+        background-color: var(--bg-card, #161b22);
+        color: var(--text-primary, #f0f6fc);
+        cursor: pointer;
+    }
+
+    [aria-expanded='true'] button {
+        background-color: var(--sidebar-active-bg, #11302f);
+        color: var(--accent, #5ee0d6);
+    }
+
+    [aria-expanded='true'] button .open-menu {
+        display: none;
+    }
+
+    :not([aria-expanded='true']) button .close-menu {
+        display: none;
+    }
+</style>
+
+<style is:global>
+    [data-mobile-menu-expanded] {
+        overflow: hidden;
+    }
+
+    @media (min-width: 50rem) {
+        [data-mobile-menu-expanded] {
+            overflow: auto;
+        }
+    }
+</style>

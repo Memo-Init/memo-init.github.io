@@ -35,6 +35,11 @@ export default defineConfig({
             customCss: [
                 './src/styles/theme.css'
             ],
+            components: {
+                Header: './src/components/Header.astro',
+                Footer: './src/components/Footer.astro',
+                MobileMenuToggle: './src/components/MobileMenuToggle.astro'
+            },
             social: [
                 { icon: 'github', label: 'GitHub', href: 'https://github.com/memo-init' }
             ],

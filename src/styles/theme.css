@@ -116,3 +116,66 @@ body:has(.pencil-hero) .content-panel {
 body:has(.pencil-hero) h1#_top {
     display: none !important;
 }
+
+/* ============ HEADER GEOMETRY (ported from FlowMCP custom.css) ============
+ * Delta vs. template: also set --sl-nav-height so Starlight's fixed header
+ * wrapper and the sidebar offset stay consistent with the 64/56 px height. */
+
+:root {
+    --sl-nav-height: 64px;
+}
+
+header.header {
+    background: var(--bg-canvas);
+    border-bottom: 1px solid var(--border);
+    height: 64px;
+    padding: 0 1rem;
+}
+
+/* Delta vs. template (PRD-004 US-1): hide the top-nav links below Starlight's
+ * md breakpoint (50rem). The component's scoped .header__nav { display: flex }
+ * is unlayered and therefore always beats the layered sl-hidden utility
+ * (@layer starlight.utils) — an explicit unlayered rule is required.
+ * Live-verified: the FlowMCP template shows the same layer behaviour. */
+@media (max-width: 50rem) {
+    header.header .header__nav {
+        display: none !important;
+    }
+}
+
+@media (max-width: 768px) {
+    :root {
+        --sl-nav-height: 56px;
+    }
+
+    header.header {
+        height: 56px;
+        padding: 0 0.75rem;
+    }
+
+    /* Hamburger on the right (FlowMCP pattern): logo left, toggle right.
+     * starlight-menu-button lives in nav.sidebar, fixed-positioned,
+     * 44 px minimum touch target. */
+    starlight-menu-button {
+        position: fixed !important;
+        top: 8px !important;
+        right: 8px !important;
+        left: auto !important;
+        z-index: 100 !important;
+    }
+
+    /* Delta vs. template (PRD-004 US-1): the button itself is fixed-positioned
+     * (scoped style, inset-inline-start) — a fixed child does not follow its
+     * fixed parent, so the BUTTON insets must be overridden too, not only the
+     * custom element. top 6px centers the 44 px target in the 56 px header. */
+    starlight-menu-button button {
+        background: var(--bg-card) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: 6px !important;
+        min-width: 44px !important;
+        min-height: 44px !important;
+        top: 6px !important;
+        inset-inline-start: auto !important;
+        inset-inline-end: 8px !important;
+    }
+}

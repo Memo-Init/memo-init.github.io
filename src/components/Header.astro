@@ -1,0 +1,106 @@
+---
+// Custom header — ported from FlowMCP Header.astro (Memo 003, Kap 6).
+// Simplified for memo-init: single locale (EN), no LanguageSelect, no version badge.
+import config from 'virtual:starlight/user-config';
+
+import Search from 'virtual:starlight/components/Search';
+import SiteTitle from 'virtual:starlight/components/SiteTitle';
+
+const shouldRenderSearch =
+    config.pagefind || config.components.Search !== '@astrojs/starlight/components/Search.astro';
+
+const path = Astro.url.pathname;
+
+const navLinks = [
+    { text: 'Specification', href: '/specification/overview/', match: '/specification' },
+    { text: 'Workbench', href: '/workbench/overview/', match: '/workbench' },
+    { text: 'Blog', href: '/blog/', match: '/blog' }
+];
+---
+
+<div class="header site-header">
+    <div class="header__left">
+        <div class="title-wrapper sl-flex">
+            <SiteTitle />
+        </div>
+        <nav class="header__nav sl-hidden md:sl-flex" aria-label="Main navigation">
+            {navLinks.map((link) => (
+                <a
+                    href={link.href}
+                    class={`header__nav-link ${path.indexOf(link.match) !== -1 ? 'is-active' : ''}`}
+                >
+                    {link.text}
+                </a>
+            ))}
+        </nav>
+    </div>
+
+    <div class="sl-flex print:hidden header__search">
+        {shouldRenderSearch && <Search />}
+    </div>
+</div>
+
+<style>
+    .site-header {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 1rem;
+        align-items: center;
+        height: 100%;
+    }
+
+    .header__left {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+    }
+
+    .title-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        overflow: clip;
+        padding: 0.25rem;
+        margin: -0.25rem;
+        min-width: 0;
+    }
+
+    .header__nav {
+        display: flex;
+        gap: 1.25rem;
+        align-items: center;
+    }
+
+    .header__nav-link {
+        color: var(--text-inactive);
+        font-size: 14px;
+        font-weight: 500;
+        text-decoration: none;
+        padding: 0.25rem 0;
+        transition: color 0.15s;
+    }
+
+    .header__nav-link:hover {
+        color: var(--text-primary);
+    }
+
+    .header__nav-link.is-active {
+        color: var(--text-primary);
+        font-weight: 600;
+    }
+
+    .header__search {
+        justify-self: end;
+        max-width: 220px;
+    }
+
+    @media (max-width: 50rem) {
+        .header__left {
+            gap: 0.5rem;
+        }
+
+        .header__search {
+            max-width: 100%;
+        }
+    }
+</style>
