@@ -199,3 +199,13 @@ header.header {
         inset-inline-end: 8px !important;
     }
 }
+
+/* Search: section tag above result titles (ported from FlowMCP) */
+.pagefind-section-tag {
+    font-size: 11px;
+    color: var(--text-inactive, #8a8f99);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin: 0 0 4px;
+    font-weight: 500;
+}

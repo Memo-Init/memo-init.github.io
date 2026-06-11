@@ -14,7 +14,9 @@
         "favicons": "node scripts/generate-favicons.mjs",
         "generate-llms-txt": "node scripts/generate-llms-txt.mjs",
         "generate-robots-txt": "node scripts/generate-robots-txt.mjs",
-        "build": "npm run sync-spec && npm run generate-llms-txt && npm run generate-robots-txt && astro build",
+        "inject-pagefind-meta": "node scripts/inject-pagefind-meta.mjs",
+        "test:pagefind": "node scripts/test-pagefind.mjs",
+        "build": "npm run sync-spec && npm run generate-llms-txt && npm run generate-robots-txt && npm run inject-pagefind-meta && astro build",
         "preview": "astro preview"
     },
     "dependencies": {

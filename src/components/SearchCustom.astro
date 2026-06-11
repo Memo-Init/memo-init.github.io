@@ -1,0 +1,281 @@
+---
+// Search override — ports the 5 FlowMCP pagefind fixes (memo 003, chapter 8).
+// Template: flowmcp.github.io src/components/SearchCustom.astro (port, not reinvented).
+// 1. Section-tag injection on results (Fix 1, runtime half — build half in scripts/inject-pagefind-meta.mjs)
+// 2. Permanent empty state with a deterministic suggestion list (Fix 2)
+// 3. Empty state mounts on the early/visible #starlight__search root (Fix 3)
+// 4. Mobile cancel + Escape close the dialog (Fix 4)
+// Fix 5 (build verification) lives in scripts/test-pagefind.mjs.
+import Default from '@astrojs/starlight/components/Search.astro'
+---
+
+<Default />
+
+<script is:inline>
+    ( function() {
+        let pagefindLib = null
+        const loadLib = async () => {
+            if( pagefindLib ) { return pagefindLib }
+            try {
+                pagefindLib = await import( '/pagefind/pagefind.js' )
+                await pagefindLib.options( {} )
+                return pagefindLib
+            } catch( e ) { return null }
+        }
+
+        const sectionByUrl = {}
+
+        const insertTag = ( result, sectionText ) => {
+            if( result.dataset.sectionInjected === 'true' ) { return }
+            const titleInner = result.querySelector( '.pagefind-ui__result-inner > .pagefind-ui__result-title' )
+            const target = titleInner || result.querySelector( '.pagefind-ui__result-title' )
+            if( !target ) { return }
+            const tag = document.createElement( 'div' )
+            tag.className = 'pagefind-section-tag'
+            tag.textContent = sectionText
+            target.parentElement.insertBefore( tag, target )
+            result.dataset.sectionInjected = 'true'
+        }
+
+        const resolveSection = async ( href ) => {
+            if( sectionByUrl[ href ] !== undefined ) { return sectionByUrl[ href ] }
+            const lib = await loadLib()
+            if( !lib ) { sectionByUrl[ href ] = null; return null }
+            try {
+                const search = await lib.search( href.split( '/' ).filter( Boolean ).slice( -1 )[ 0 ] || '' )
+                const datas = await Promise.all( search.results.map( ( r ) => r.data() ) )
+                const found = datas.find( ( d ) => d.url === href || d.url + '/' === href || d.url === href + '/' )
+                if( found && found.meta && found.meta.section ) {
+                    sectionByUrl[ href ] = found.meta.section
+                    return sectionByUrl[ href ]
+                }
+            } catch( e ) {}
+            sectionByUrl[ href ] = null
+            return null
+        }
+
+        const processResults = async () => {
+            const results = document.querySelectorAll( '.pagefind-ui__result' )
+            await Promise.all( Array.from( results ).map( async ( result ) => {
+                if( result.dataset.sectionInjected === 'true' ) { return }
+                const link = result.querySelector( '.pagefind-ui__result-link' )
+                if( !link ) { return }
+                const href = link.getAttribute( 'href' )
+                if( !href ) { return }
+                const section = await resolveSection( href )
+                if( section ) { insertTag( result, section ) }
+            } ) )
+        }
+
+        // -------- Fix 2 (ported): filled empty state --------
+        // Instead of a bare "type to search" the empty state shows a curated,
+        // deterministic suggestion list — the modal never looks empty.
+        // memo-init is single-locale (EN only).
+        const SUGGESTIONS = {
+            en: {
+                heading: 'Suggested pages',
+                items: [
+                    { href: '/specification/overview/', label: 'Specification Overview' },
+                    { href: '/specification/philosophy/', label: 'Guardrail Philosophy' },
+                    { href: '/specification/memo-sop-entrypoint/', label: 'Memo-SOP Entry Point' },
+                    { href: '/specification/memo-structure/', label: 'Memo Structure' },
+                    { href: '/workbench/overview/', label: 'Workbench Overview' }
+                ]
+            }
+        }
+
+        const buildEmptyState = ( emptyMsg ) => {
+            if( emptyMsg.dataset.suggestionsBuilt === 'true' ) { return }
+            const data = SUGGESTIONS.en
+            const heading = document.createElement( 'div' )
+            heading.className = 'search-empty-state__heading'
+            heading.textContent = data.heading
+            const list = document.createElement( 'ul' )
+            list.className = 'search-empty-state__list'
+            data.items.forEach( ( item ) => {
+                const li = document.createElement( 'li' )
+                const link = document.createElement( 'a' )
+                link.href = item.href
+                link.textContent = item.label
+                link.className = 'search-empty-state__link'
+                li.appendChild( link )
+                list.appendChild( li )
+            } )
+            emptyMsg.textContent = ''
+            emptyMsg.appendChild( heading )
+            emptyMsg.appendChild( list )
+            emptyMsg.dataset.suggestionsBuilt = 'true'
+        }
+
+        const ensureEmptyState = () => {
+            // Fix 3 (ported, FlowMCP memo 088 ch. 6b): #starlight__search is the
+            // early/visibly mounting search root. The late/invisibly mounting
+            // .pagefind-ui__drawer was the reason the suggestion list never
+            // appeared. Fallback to .pagefind-ui is deliberate (no silent default)
+            // in case Starlight renames the ID.
+            const drawer = document.querySelector( '.pagefind-ui' )
+            if( !drawer ) { return }
+            const root = document.querySelector( '#starlight__search' ) || drawer
+            const input = drawer.querySelector( '.pagefind-ui__search-input' )
+            const results = drawer.querySelector( '.pagefind-ui__results' )
+            const hasQuery = input && input.value && input.value.trim().length > 0
+            let emptyMsg = root.querySelector( '.search-empty-state' )
+
+            if( !hasQuery ) {
+                if( !emptyMsg ) {
+                    emptyMsg = document.createElement( 'div' )
+                    emptyMsg.className = 'search-empty-state'
+                    emptyMsg.setAttribute( 'role', 'status' )
+                    root.appendChild( emptyMsg )
+                }
+                buildEmptyState( emptyMsg )
+                emptyMsg.style.display = ''
+                if( results ) { results.style.minHeight = '120px' }
+            } else if( emptyMsg ) {
+                emptyMsg.style.display = 'none'
+            }
+        }
+
+        // -------- Fix 4 (ported): mobile cancel button --------
+        const wireMobileCancel = () => {
+            // memo-init adaptation: Starlight 0.38 renders the dialog without a
+            // marker attribute and the mobile cancel as button[data-close-modal].
+            // The template selectors are kept, the real ones appended.
+            const dialog = document.querySelector( 'dialog[data-starlight-search]' ) || document.querySelector( '.starlight-search-dialog' ) || document.querySelector( 'site-search dialog' )
+            const clearBtn = document.querySelector( '.pagefind-ui__search-clear' )
+            const closeAll = () => {
+                if( dialog && typeof dialog.close === 'function' ) { dialog.close() }
+                document.body.removeAttribute( 'data-mobile-menu-expanded' )
+            }
+            // Mobile cancel: bind every cancel-button variant Starlight may render
+            const cancelMobile = document.querySelector( '.starlight-search-cancel, [data-search-cancel], button[data-close-modal]' )
+            if( cancelMobile && !cancelMobile.dataset.prd04Wired ) {
+                cancelMobile.dataset.prd04Wired = 'true'
+                cancelMobile.addEventListener( 'click', closeAll )
+            }
+            // Pagefind clear empties the input (existing behavior) — re-render the empty state
+            if( clearBtn && !clearBtn.dataset.prd04Wired ) {
+                clearBtn.dataset.prd04Wired = 'true'
+                clearBtn.addEventListener( 'click', () => {
+                    setTimeout( ensureEmptyState, 0 )
+                } )
+            }
+        }
+
+        // Fix 4 (ported): Escape closes the search dialog from anywhere.
+        // Cross-scope close — also clears the mobile-menu state on <body>.
+        const wireEscape = () => {
+            if( document.body.dataset.searchEscWired === 'true' ) { return }
+            document.body.dataset.searchEscWired = 'true'
+            document.addEventListener( 'keydown', ( event ) => {
+                if( event.key !== 'Escape' ) { return }
+                const dialog = document.querySelector( 'dialog[data-starlight-search]' ) || document.querySelector( '.starlight-search-dialog' ) || document.querySelector( 'site-search dialog' )
+                if( dialog && dialog.open && typeof dialog.close === 'function' ) { dialog.close() }
+                document.body.removeAttribute( 'data-mobile-menu-expanded' )
+            } )
+        }
+
+        let scheduled = false
+        const schedule = () => {
+            if( scheduled ) { return }
+            scheduled = true
+            setTimeout( () => {
+                scheduled = false
+                processResults()
+                ensureEmptyState()
+                wireMobileCancel()
+                wireEscape()
+            }, 80 )
+        }
+
+        const wire = () => {
+            const observer = new MutationObserver( () => schedule() )
+            observer.observe( document.body, { childList: true, subtree: true } )
+            schedule()
+        }
+
+        document.addEventListener( 'DOMContentLoaded', wire )
+        document.addEventListener( 'astro:page-load', wire )
+    } )()
+</script>
+
+<style is:global>
+    /* One hover area per result item (ported) ------------------------- */
+    .pagefind-ui__result {
+        cursor: pointer;
+        transition: background-color 0.15s ease;
+    }
+    .pagefind-ui__result:hover,
+    .pagefind-ui__result:focus-within {
+        background-color: var(--sidebar-active-bg, rgba(121, 192, 255, 0.08));
+    }
+    /* Neutralize sub-element hover zones (no own backgrounds) */
+    .pagefind-ui__result .pagefind-ui__result-title:hover,
+    .pagefind-ui__result .pagefind-ui__result-link:hover,
+    .pagefind-ui__result .pagefind-ui__result-excerpt:hover {
+        background-color: transparent;
+    }
+
+    /* Result highlighting for the search term (ported) ----------------- */
+    .pagefind-ui__result mark,
+    .pagefind-ui__result .pagefind-ui__result-excerpt mark {
+        background-color: var(--accent, #79c0ff);
+        color: var(--bg-canvas, #fff);
+        padding: 0 0.15em;
+        border-radius: 3px;
+        font-weight: 600;
+    }
+
+    /* Fix 2 (ported): filled empty state with suggestion list ---------- */
+    .search-empty-state {
+        padding: 1rem 0.75rem 1.25rem;
+    }
+    .search-empty-state__heading {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--text-inactive, #8a8f99);
+        padding: 0 0.5rem 0.5rem;
+    }
+    .search-empty-state__list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+    .search-empty-state__link {
+        display: block;
+        padding: 0.5rem 0.6rem;
+        border-radius: 6px;
+        color: var(--text-primary, #e6edf3);
+        text-decoration: none;
+        font-size: 14px;
+        transition: background-color 0.12s ease;
+    }
+    .search-empty-state__link:hover,
+    .search-empty-state__link:focus-visible {
+        background-color: var(--sidebar-active-bg, rgba(121, 192, 255, 0.08));
+        color: var(--accent, #79c0ff);
+        outline: none;
+    }
+
+    /* Results container keeps a visible minimum height ----------------- */
+    .pagefind-ui__results {
+        min-height: 80px;
+    }
+
+    /* Fix 4 (ported): mobile cancel button visible + clickable --------- */
+    @media (max-width: 800px) {
+        .starlight-search-cancel,
+        [data-search-cancel] {
+            display: inline-flex !important;
+            align-items: center;
+            padding: 0.5rem 0.75rem;
+            cursor: pointer;
+            min-height: 44px; /* touch target */
+        }
+    }
+</style>
