@@ -1,30 +1,81 @@
 /*
- * memo-init theme — clearer accent palette (teal), replaces Starlight's
- * default purple accent. Hex values are contrast-checked against WCAG AA
- * (>= 4.5:1 for body/link text) in BOTH light and dark mode.
+ * memo-init theme — full FlowMCP token set (GitHub dark surface logic) with
+ * the memo-init teal accent (Memo 003, F2 = A). Template:
+ * flowmcp.github.io/src/styles/custom.css (token set + site-wide gradient).
  *
- * Verified ratios (see PRD-003 Validation step 3):
- *   light: accent #0d6e6e on #ffffff      -> 6.05:1  (AA pass)
- *          accent-high #0a5757 on #ffffff  -> 8.35:1  (AA pass)
- *          white text on accent button bg  -> 6.05:1  (AA pass)
- *   dark:  accent #5ee0d6 on #17181c       -> 11.07:1 (AA pass)
- *          accent-high #8af0e8 on #17181c   -> 13.27:1 (AA pass)
- *          dark text on accent button bg    -> 11.07:1 (AA pass)
+ * Contrast (re-measured on --bg-canvas #0d1117, WCAG AA >= 4.5:1 body text):
+ *   accent #5ee0d6 on #0d1117        -> 11.81:1  (AA pass)
+ *   accent-high #8af0e8 on #0d1117   -> 14.16:1  (AA pass)
+ *   text-primary #f0f6fc on #0d1117  -> 17.39:1  (AA pass)
+ *   text-inactive #8b949e on #0d1117 -> 6.15:1   (AA pass)
  *
- * accent-low is a subtle surface/badge tint (not text) and is intentionally
- * light/desaturated; it is not held to the 4.5:1 text threshold.
+ * Light-mode teal triple kept per F2 = A (brand reference; surfaces render
+ * dark in both themes after the FlowMCP takeover):
+ *   accent #0d6e6e / accent-high #0a5757 / accent-low #c4ecea
  */
 
-/* Light mode (Starlight default theme) */
-:root {
-    --sl-color-accent-low: #c4ecea;
-    --sl-color-accent: #0d6e6e;
-    --sl-color-accent-high: #0a5757;
+/* Hide theme selector — both themes render dark after the token takeover */
+starlight-theme-select {
+    display: none !important;
 }
 
-/* Dark mode */
-:root[data-theme='dark'] {
+:root,
+[data-theme='light'],
+[data-theme='dark'] {
+    /* surface tokens (FlowMCP) */
+    --bg-canvas: #0d1117;
+    --bg-card: #161b22;
+    --border: #30363d;
+    --sidebar-active-bg: #11302f;   /* teal-tinted (template uses babyblue-tinted #1c2e4a) */
+    --accent: #5ee0d6;              /* memo-init teal (F2 = A) */
+    --text-primary: #f0f6fc;
+    --text-inactive: #8b949e;
+    --group-title: #6e7681;
+
+    /* Starlight token mapping (template lines 91-111) */
     --sl-color-accent-low: #11302f;
-    --sl-color-accent: #5ee0d6;
+    --sl-color-accent: var(--accent);
     --sl-color-accent-high: #8af0e8;
+    --sl-color-bg: var(--bg-canvas);
+    --sl-color-bg-nav: var(--bg-canvas);
+    --sl-color-bg-sidebar: var(--bg-card);
+    --sl-color-bg-inline-code: var(--bg-card);
+    --sl-color-hairline-light: var(--border);
+    --sl-color-hairline: var(--border);
+    --sl-color-hairline-shade: var(--bg-card);
+    --sl-color-text: var(--text-primary);
+    --sl-color-text-accent: var(--accent);
+    --sl-color-gray-1: var(--text-primary);
+    --sl-color-gray-2: var(--text-inactive);
+    --sl-color-gray-3: var(--group-title);
+    --sl-color-gray-4: var(--border);
+    --sl-color-gray-5: var(--bg-card);
+    --sl-color-gray-6: var(--bg-canvas);
+    --sl-color-black: var(--bg-canvas);
+    --sl-color-white: var(--text-primary);
+}
+
+/* Site-wide radial gradient — teal instead of babyblue, same alphas (Kap 3) */
+html {
+    background-color: var(--bg-canvas);
+    background-image:
+        radial-gradient( ellipse 80% 60% at 20% 0%, rgba( 94, 224, 214, 0.06 ) 0%, rgba( 94, 224, 214, 0 ) 60% ),
+        radial-gradient( ellipse 70% 50% at 80% 100%, rgba( 94, 224, 214, 0.04 ) 0%, rgba( 94, 224, 214, 0 ) 60% );
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+}
+
+/* Transparency so the html gradient shows through (template lines 147-161) */
+body {
+    background-color: transparent;
+}
+
+body > .page,
+body > .page > .main-frame,
+.main-pane {
+    background-color: transparent !important;
+}
+
+.content-panel {
+    background: transparent;
 }
