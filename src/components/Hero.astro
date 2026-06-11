@@ -1,0 +1,190 @@
+---
+// Hero — ported from the FlowMCP pencil-style landing hero (Memo 003, Kap 5).
+// Simplified for memo-init: single locale (EN), no blog pill, no stats bar.
+// Copy is derived from the mission text of index.mdx — see PRD-003.
+const t = {
+    headlineLine1: 'Memo-driven, agentic',
+    headlineLine2: 'software engineering.',
+    mission: 'memo-init transforms long, unstructured input — typically dictated voice transcripts — into discrete, executable work orders, and governs the human-AI interaction that clarifies open questions before implementation begins.',
+    tagline: 'Guardrails first — an inductive, RFC-style specification. The developer plans; the AI implements autonomously and self-evaluating.',
+    ctaPrimary: 'Read the Specification →',
+    ctaSecondary: 'View on GitHub',
+    trust: 'Plan before you build · Keep context clean · Never delete · Always leave an audit trail',
+    docsHref: '/specification/overview/',
+    githubHref: 'https://github.com/memo-init'
+};
+---
+
+<div class="pencil-hero">
+    <h1 class="pencil-hero__headline">
+        {t.headlineLine1}<br/>{t.headlineLine2}
+    </h1>
+
+    <p class="pencil-hero__mission">
+        {t.mission}
+    </p>
+
+    <p class="pencil-hero__tagline">
+        {t.tagline}
+    </p>
+
+    <div class="pencil-hero__actions">
+        <a class="pencil-hero__cta pencil-hero__cta--primary" href={t.docsHref}>
+            {t.ctaPrimary}
+        </a>
+        <a class="pencil-hero__cta pencil-hero__cta--secondary" href={t.githubHref} rel="noopener" target="_blank">
+            {t.ctaSecondary}
+        </a>
+    </div>
+
+    <p class="pencil-hero__trust">{t.trust}</p>
+</div>
+
+<style>
+.pencil-hero {
+    position: relative;
+    isolation: isolate;
+    text-align: center;
+    max-width: 1000px;
+    margin: 1rem auto 1rem;
+    padding: 0 1.5rem;
+}
+
+/* Mouse-following radial gradient (ported from FlowMCP, Memo 059 PRD-002 A1):
+ *   - explicit rgba (Safari + Chrome parity, no color-mix dependency)
+ *   - higher alpha + opacity so the effect is actually visible on dark canvas
+ *   - teal accent #5ee0d6 = rgb(94, 224, 214) instead of FlowMCP babyblue
+ *   - Safari note: rgba is universally supported; color-mix requires 16.4+
+ */
+.pencil-hero::before {
+    content: '';
+    position: absolute;
+    inset: -2rem;
+    z-index: 0;
+    pointer-events: none;
+    border-radius: 24px;
+    background: radial-gradient(
+        circle 600px at var(--mouse-x, 50%) var(--mouse-y, 50%),
+        rgba(94, 224, 214, 0.22) 0%,
+        rgba(94, 224, 214, 0.10) 35%,
+        rgba(94, 224, 214, 0) 70%
+    );
+    opacity: 0.9;
+    animation: pencil-hero-pulse 8s ease-in-out infinite;
+}
+
+/* Keep all hero children above the gradient layer */
+.pencil-hero > * {
+    position: relative;
+    z-index: 1;
+}
+
+@keyframes pencil-hero-pulse {
+    0%, 100% { opacity: 0.80; transform: scale(1); }
+    50%      { opacity: 1.00; transform: scale(1.02); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .pencil-hero::before {
+        animation: none;
+        opacity: 0.85;
+    }
+}
+
+/* .pencil-hero__headline — see theme.css HERO HEADLINE OVERRIDE block */
+
+.pencil-hero__mission {
+    font-size: 17px;
+    color: var(--text-secondary, var(--text-primary));
+    margin: 0 auto 1.5rem;
+    max-width: 760px;
+    line-height: 1.5;
+    font-style: italic;
+    opacity: 0.95;
+}
+
+.pencil-hero__tagline {
+    font-size: 16px;
+    color: var(--text-inactive);
+    margin: 0 auto 2.5rem;
+    max-width: 680px;
+    line-height: 1.5;
+}
+
+.pencil-hero__actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+    margin-bottom: 2.5rem;
+    flex-wrap: wrap;
+}
+
+.pencil-hero__cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.15s;
+}
+
+.pencil-hero__cta--primary {
+    background: var(--accent);
+    color: var(--bg-canvas) !important;
+}
+.pencil-hero__cta--primary:hover { filter: brightness(0.9); }
+
+.pencil-hero__cta--secondary {
+    background: transparent;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--border);
+}
+.pencil-hero__cta--secondary:hover {
+    border-color: var(--accent);
+    color: var(--accent) !important;
+}
+
+.pencil-hero__trust {
+    font-size: 12px;
+    color: var(--text-inactive);
+    margin: 0;
+}
+
+@media (max-width: 640px) {
+    .pencil-hero { margin: 3rem auto 2rem; }
+    /* .pencil-hero__headline mobile rule — see theme.css HERO HEADLINE OVERRIDE */
+    .pencil-hero__mission { font-size: 14px; }
+    .pencil-hero__tagline { font-size: 13px; }
+    .pencil-hero::before {
+        animation-duration: 10s;
+        opacity: 0.4;
+    }
+}
+</style>
+
+<script>
+    if ( matchMedia( '(hover: hover)' ).matches && !matchMedia( '(prefers-reduced-motion: reduce)' ).matches ) {
+        const hero = document.querySelector( '.pencil-hero' )
+        if ( hero ) {
+            let pendingFrame = null
+            hero.addEventListener( 'mousemove', ( event ) => {
+                if ( pendingFrame ) return
+                pendingFrame = requestAnimationFrame( () => {
+                    const rect = hero.getBoundingClientRect()
+                    const x = ( ( event.clientX - rect.left ) / rect.width ) * 100
+                    const y = ( ( event.clientY - rect.top ) / rect.height ) * 100
+                    hero.style.setProperty( '--mouse-x', x + '%' )
+                    hero.style.setProperty( '--mouse-y', y + '%' )
+                    pendingFrame = null
+                } )
+            } )
+            hero.addEventListener( 'mouseleave', () => {
+                hero.style.setProperty( '--mouse-x', '50%' )
+                hero.style.setProperty( '--mouse-y', '50%' )
+            } )
+        }
+    }
+</script>

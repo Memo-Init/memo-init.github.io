@@ -79,3 +79,40 @@ body > .page > .main-frame,
 .content-panel {
     background: transparent;
 }
+
+/* ============ HERO HEADLINE OVERRIDE (ported from FlowMCP custom.css) ============
+ * body :where(.pencil-hero) raises specificity to (0,1,2) without nested
+ * pseudo-class penalty, beating .sl-markdown-content h1 defaults. */
+
+body :where(.pencil-hero) .pencil-hero__headline {
+    font-size: clamp(3rem, 7vw, 5rem) !important;
+    font-weight: 900 !important;
+    line-height: 1.02;
+    letter-spacing: -0.03em;
+    color: var(--text-primary);
+    margin: 0 0 2rem;
+}
+
+@media (max-width: 640px) {
+    body :where(.pencil-hero) .pencil-hero__headline {
+        font-size: clamp(2rem, 10vw, 3rem) !important;
+    }
+}
+
+/* ============ SPLASH CLEANUP (ported from FlowMCP custom.css) ============
+ * No stray separators around the hero, no duplicate page title:
+ * the splash template renders <h1 id="_top"> from frontmatter title,
+ * which would duplicate the hero headline. */
+
+body:has(.pencil-hero) hr,
+body:has(.pencil-hero) .main-pane > hr {
+    display: none !important;
+}
+
+body:has(.pencil-hero) .content-panel {
+    border: none !important;
+}
+
+body:has(.pencil-hero) h1#_top {
+    display: none !important;
+}
