@@ -23,7 +23,7 @@ export default defineConfig({
             title: 'memo-init',
             logo: {
                 src: './src/assets/logo.svg',
-                replacesTitle: false
+                replacesTitle: true
             },
             customCss: [
                 './src/styles/theme.css'
