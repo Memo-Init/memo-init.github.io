@@ -198,6 +198,14 @@ header.header {
         inset-inline-start: auto !important;
         inset-inline-end: 8px !important;
     }
+
+    /* Delta (Phase 7 finding B1): the fixed hamburger (44 px target + 8 px inset)
+     * floats above the right-aligned search trigger and made it untappable on
+     * docs routes. Reserve its footprint; splash pages have no menu button, so
+     * the search stays flush right there. */
+    body:has(starlight-menu-button) .header__search {
+        margin-inline-end: 56px;
+    }
 }
 
 /* Search: section tag above result titles (ported from FlowMCP) */
