@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://memo-init.github.io/sitemap-index.xml
+
+# llms.txt — machine-readable context
+# Full spec: https://memo-init.github.io/llms.txt

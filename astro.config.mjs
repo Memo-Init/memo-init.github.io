@@ -54,7 +54,8 @@ export default defineConfig({
                     label: 'Workbench',
                     collapsed: true,
                     items: sidebarData.workbenchItems
-                }
+                },
+                { label: 'For LLMs', slug: 'for-llms' }
             ]
         })
     ]

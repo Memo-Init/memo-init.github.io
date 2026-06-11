@@ -13,7 +13,8 @@
         "sync-spec": "node scripts/sync-spec.mjs",
         "favicons": "node scripts/generate-favicons.mjs",
         "generate-llms-txt": "node scripts/generate-llms-txt.mjs",
-        "build": "npm run sync-spec && npm run generate-llms-txt && astro build",
+        "generate-robots-txt": "node scripts/generate-robots-txt.mjs",
+        "build": "npm run sync-spec && npm run generate-llms-txt && npm run generate-robots-txt && astro build",
         "preview": "astro preview"
     },
     "dependencies": {
