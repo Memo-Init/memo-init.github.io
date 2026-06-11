@@ -28,7 +28,11 @@ import path from 'node:path'
 const __dirname = path.dirname( fileURLToPath( import.meta.url ) )
 const REPO_ROOT = path.resolve( __dirname, '..' )
 
-const SPEC_REPO_PAYLOAD = path.resolve( REPO_ROOT, '..', 'spec', 'generated', 'docs-payload' )
+// Spec repo dir: SPEC_REPO_DIR env (CI checks out the spec repo here), else local sibling ../spec.
+const SPEC_REPO_DIR = process.env.SPEC_REPO_DIR
+    ? path.resolve( process.env.SPEC_REPO_DIR )
+    : path.resolve( REPO_ROOT, '..', 'spec' )
+const SPEC_REPO_PAYLOAD = path.resolve( SPEC_REPO_DIR, 'generated', 'docs-payload' )
 const WORKBENCH_PAYLOAD_SRC = path.resolve( SPEC_REPO_PAYLOAD, 'workbench' )
 
 const CONTENT_SPEC_DIR = path.resolve( REPO_ROOT, 'src', 'content', 'docs', 'specification' )

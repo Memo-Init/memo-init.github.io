@@ -23,19 +23,27 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Checkout Spec repo (source of docs payload)
+        uses: actions/checkout@v4
+        with:
+          repository: Memo-Init/spec
+          path: _spec
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 22
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Install Playwright Chromium (for mermaid inline-svg)
         run: npx playwright install --with-deps chromium
 
       - name: Build
         run: npm run build
+        env:
+          SPEC_REPO_DIR: ${{ github.workspace }}/_spec
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
