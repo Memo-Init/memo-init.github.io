@@ -1,12 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 188 40" role="img" aria-label="memo-init" fill="none">
   <title>memo-init</title>
   <!--
-    memo-init wordmark — v1 DRAFT (S/W, monochrome).
-    Black & white discussion basis per decision B1 ("S/W-Pencil-Entwuerfe zuerst").
+    memo-init wordmark — v1 (B1 decision still open, v1 active).
     Editable vector: glyph = a memo card with a turned corner and two text lines.
-    currentColor is used throughout so the logo follows Starlight light/dark theme.
+    Explicit colors for the dark canvas (Memo 003, F2 = A): teal #5ee0d6 glyph,
+    #f0f6fc wordmark. Hardcoded because Starlight embeds the logo as <img>,
+    where page CSS variables do not resolve.
   -->
-  <g stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round">
+  <g stroke="#5ee0d6" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round">
     <!-- memo card with folded top-right corner -->
     <path d="M4 7 h22 l6 6 v20 a2 2 0 0 1 -2 2 H6 a2 2 0 0 1 -2 -2 V9 a2 2 0 0 1 2 -2 Z" />
     <path d="M26 7 v6 h6" />
@@ -18,5 +19,5 @@
   <text x="44" y="27"
         font-family="ui-monospace, 'SFMono-Regular', 'JetBrains Mono', Menlo, Consolas, monospace"
         font-size="22" font-weight="600" letter-spacing="-0.4"
-        fill="currentColor">memo<tspan font-weight="400" fill="currentColor">-init</tspan></text>
+        fill="#f0f6fc">memo<tspan font-weight="400" fill="#f0f6fc">-init</tspan></text>
 </svg>
