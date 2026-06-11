@@ -1,0 +1,266 @@
+---
+// BlogIndexLayout.astro — ported from flowmcp.github.io BlogIndexLayout.
+// Renders the blog landing (Featured + Filter + Grid) inside the Starlight
+// frame via <StarlightPage>, so the global Header/Footer overrides apply.
+//
+// Reductions vs the FlowMCP template (Memo 003, Kap 7):
+//   - English-only: no `lang` prop, no /de/blog base, no bilingual t-table.
+//   - Empty-state guard: the template crashes on `featured.id` with an empty
+//     collection; here the scaffold builds green before the first post lands.
+
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro'
+import { getCollection } from 'astro:content'
+import { selectFeatured } from '../lib/featured.mjs'
+
+const base = '/blog'
+
+// Show drafts in dev mode for local review; hide in production builds.
+const showDrafts = import.meta.env.DEV
+const posts = ( await getCollection( 'blog', ( { data } ) => showDrafts || !data.draft ) )
+    .sort( ( a, b ) => b.data.date.valueOf() - a.data.date.valueOf() )
+
+// Featured post comes from the shared single-source helper, guarded for the
+// empty collection (scaffold ships before the first post).
+const { featured } = posts.length > 0
+    ? selectFeatured( { posts } )
+    : { featured: null }
+const rest = featured
+    ? posts.filter( ( post ) => post.id !== featured.id )
+    : posts
+
+// Derive filter categories from the actual posts collection. The first tag
+// (tags[0]) is the primary category — matches the display logic on the cards.
+// 'All' is the default pseudo-category.
+const categorySet = new Set()
+posts.forEach( ( post ) => {
+    const primary = ( post.data.tags && post.data.tags[ 0 ] ) || ''
+    if( primary.length > 0 ) { categorySet.add( primary ) }
+} )
+const sortedCategories = Array.from( categorySet ).sort( ( a, b ) => a.localeCompare( b ) )
+const filterTabs = [ 'All', ...sortedCategories ]
+
+// Helper to humanise a tag slug for the button label
+const labelFor = ( tag ) => {
+    return tag.charAt( 0 ).toUpperCase() + tag.slice( 1 )
+}
+
+const frontmatter = {
+    title: 'Blog',
+    description: 'Updates and release notes for Memo-Init.',
+    template: 'splash',
+    tableOfContents: false,
+    pagefind: true
+}
+---
+
+<StarlightPage frontmatter={frontmatter}>
+    <section class="blog-index" id="main-content">
+        <header class="blog-index__header">
+            <div class="blog-index__header-row">
+                <h1 class="blog-index__title">Blog</h1>
+                <a class="blog-index__rss" href={`${ base }/rss.xml`}>RSS Feed →</a>
+            </div>
+            <p class="blog-index__subtitle">Updates and release notes for Memo-Init.</p>
+        </header>
+
+        <nav class="blog-index__filters" aria-label="Blog filter">
+            { filterTabs.map( ( tab, i ) => (
+                <button
+                    class={`blog-index__filter ${ i === 0 ? 'is-active' : '' }`}
+                    type="button"
+                    data-filter={tab}
+                    aria-pressed={i === 0 ? 'true' : 'false'}
+                >
+                    { labelFor( tab ) }
+                </button>
+            ) )}
+        </nav>
+
+        { featured && (
+            <a
+                class="blog-index__featured"
+                href={`${ base }/${ featured.id }/`}
+                data-category={( featured.data.tags && featured.data.tags[ 0 ] ) || ''}
+            >
+                <span class="blog-index__featured-badge">FEATURED</span>
+                <h2 class="blog-index__featured-title">{featured.data.title}</h2>
+                <p class="blog-index__featured-desc">{featured.data.description}</p>
+                <span class="blog-index__featured-cta">Read more →</span>
+            </a>
+        )}
+
+        { !featured && (
+            <p class="blog-index__empty">No posts yet.</p>
+        )}
+
+        { rest.length > 0 && (
+            <div class="blog-index__grid">
+                { rest.map( ( post ) => (
+                    <a
+                        class="blog-index__card"
+                        href={`${ base }/${ post.id }/`}
+                        data-category={( post.data.tags && post.data.tags[ 0 ] ) || ''}
+                    >
+                        <span class="blog-index__card-tag">{post.data.tags[ 0 ] || 'post'}</span>
+                        <h3 class="blog-index__card-title">{post.data.title}</h3>
+                        <p class="blog-index__card-desc">{post.data.description}</p>
+                    </a>
+                ) )}
+            </div>
+        )}
+    </section>
+</StarlightPage>
+
+<style is:global>
+    .blog-index {
+        max-width: 1100px;
+        margin: var( --page-mt, 2rem ) auto var( --page-mb, 4rem );
+        padding: 0 var( --page-pad-x, 1.5rem );
+    }
+
+    /* Condensed header — title + RSS on one row, subtitle below.
+     * RSS sits right on the title baseline. */
+    .blog-index__header { margin-bottom: 1rem; text-align: left; }
+    .blog-index__header-row {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+    .blog-index__title {
+        font-size: clamp(2rem, 4vw, 2.75rem);
+        font-weight: 800;
+        color: var(--sl-color-white);
+        margin: 0;
+    }
+    .blog-index__subtitle { color: var(--sl-color-gray-3); font-size: 16px; margin: 0.5rem 0 0; }
+    .blog-index__rss {
+        color: var(--sl-color-text-accent);
+        text-decoration: none;
+        font-size: 13px;
+        font-weight: 600;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    .blog-index__filters { display: flex; align-items: center; gap: 0.5rem; margin: 1.25rem 0 2rem; flex-wrap: wrap; }
+    /* Unified filter chips. Root cause of the tall 'All' in the template:
+     * Starlight markdown auto-spacing adds margin-top to sibling buttons; with
+     * the flex row's default align-items:stretch that inflated the line and
+     * stretched the margin-less first chip. margin:0 + align-items:center fixes it. */
+    .blog-index__filter {
+        display: inline-flex;
+        align-items: center;
+        margin: 0;
+        line-height: 1;
+        white-space: nowrap;
+        padding: 0.45rem 1rem;
+        background: var(--sl-color-gray-6);
+        border: 1px solid var(--sl-color-gray-5);
+        border-radius: 999px;
+        color: var(--sl-color-gray-3);
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.15s;
+    }
+    .blog-index__filter:hover { border-color: var(--sl-color-text-accent); color: var(--sl-color-text-accent); }
+    .blog-index__filter.is-active {
+        background: color-mix(in srgb, var(--sl-color-text-accent) 12%, transparent);
+        color: var(--sl-color-text-accent);
+        border-color: var(--sl-color-text-accent);
+    }
+
+    .blog-index__featured {
+        display: block;
+        padding: 2rem;
+        background: linear-gradient(135deg, color-mix(in srgb, var(--sl-color-text-accent) 18%, var(--sl-color-bg)) 0%, var(--sl-color-gray-6) 100%);
+        border: 1px solid var(--sl-color-text-accent);
+        border-radius: 12px;
+        margin-bottom: 2rem;
+        text-decoration: none;
+        color: inherit;
+        transition: transform 0.15s;
+    }
+    .blog-index__featured:hover { transform: translateY(-2px); }
+    .blog-index__featured-badge {
+        display: inline-block;
+        padding: 0.2rem 0.6rem;
+        background: var(--sl-color-text-accent);
+        color: var(--sl-color-bg);
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        margin-right: 1rem;
+    }
+    .blog-index__featured-title { font-size: 1.8rem; font-weight: 700; color: var(--sl-color-white); margin: 0.75rem 0; }
+    .blog-index__featured-desc { color: var(--sl-color-gray-3); font-size: 15px; line-height: 1.6; margin: 0 0 1rem; }
+    .blog-index__featured-cta { color: var(--sl-color-text-accent); font-weight: 600; font-size: 14px; }
+
+    .blog-index__empty { color: var(--sl-color-gray-3); font-size: 15px; }
+
+    .blog-index__grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1.5rem;
+    }
+    .blog-index__card {
+        display: block;
+        padding: 1.5rem;
+        background: var(--sl-color-gray-6);
+        border: 1px solid var(--sl-color-gray-5);
+        border-radius: 12px;
+        text-decoration: none;
+        color: inherit;
+        transition: border-color 0.15s, transform 0.15s;
+    }
+    .blog-index__card:hover { border-color: var(--sl-color-text-accent); transform: translateY(-2px); }
+    .blog-index__card-tag {
+        display: inline-block;
+        color: var(--sl-color-text-accent);
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.75rem;
+    }
+    .blog-index__card-title { font-size: 1.2rem; font-weight: 700; color: var(--sl-color-white); margin: 0 0 0.5rem; line-height: 1.3; }
+    .blog-index__card-desc { color: var(--sl-color-gray-3); font-size: 14px; line-height: 1.5; margin: 0 0 1rem; }
+
+    [data-category][hidden] { display: none !important; }
+</style>
+
+<script>
+    // Client-side filtering for the blog index. 'All' shows everything; any
+    // other category shows only posts whose data-category attribute matches
+    // the button's data-filter.
+    ( function() {
+        const buttons = document.querySelectorAll( '.blog-index__filter' )
+        const items = document.querySelectorAll( '[data-category]' )
+
+        const applyFilter = ( filter ) => {
+            items.forEach( ( el ) => {
+                const cat = el.getAttribute( 'data-category' )
+                const show = filter === 'All' || cat === filter
+                if( show ) {
+                    el.removeAttribute( 'hidden' )
+                } else {
+                    el.setAttribute( 'hidden', '' )
+                }
+            } )
+            buttons.forEach( ( btn ) => {
+                const isActive = btn.dataset.filter === filter
+                btn.classList.toggle( 'is-active', isActive )
+                btn.setAttribute( 'aria-pressed', isActive ? 'true' : 'false' )
+            } )
+        }
+
+        buttons.forEach( ( btn ) => {
+            btn.addEventListener( 'click', () => {
+                applyFilter( btn.dataset.filter )
+            } )
+        } )
+    } )()
+</script>

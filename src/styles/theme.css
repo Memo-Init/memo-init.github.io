@@ -117,6 +117,26 @@ body:has(.pencil-hero) h1#_top {
     display: none !important;
 }
 
+/* Blog index + post supply their own styled title, so Starlight's splash
+ * <h1 id="_top"> is a visible duplicate. Suppress it, scoped via :has() to
+ * blog pages only — frontmatter.title stays for <title>/SEO. Hiding just the
+ * h1 leaves an empty content-panel band with a divider; collapse it too.
+ * (Ported from flowmcp.github.io custom.css, blog scope only.) */
+body:has(.blog-index) h1#_top,
+body:has(.blog-post) h1#_top {
+    display: none !important;
+}
+
+body:has(.blog-index) .content-panel:has(h1#_top),
+body:has(.blog-post) .content-panel:has(h1#_top) {
+    display: none !important;
+}
+
+body:has(.blog-index) .content-panel,
+body:has(.blog-post) .content-panel {
+    border-top: none !important;
+}
+
 /* ============ HEADER GEOMETRY (ported from FlowMCP custom.css) ============
  * Delta vs. template: also set --sl-nav-height so Starlight's fixed header
  * wrapper and the sidebar offset stay consistent with the 64/56 px height. */

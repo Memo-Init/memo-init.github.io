@@ -1,0 +1,268 @@
+---
+// BlogPostLayout.astro — ported from flowmcp.github.io BlogPostLayout.
+// Renders a single blog post inside the Starlight frame (Header + Footer)
+// via <StarlightPage>.
+//
+// Reductions vs the FlowMCP template (Memo 003, Kap 7):
+//   - English-only: no `lang` derivation, no /de/blog base, no bilingual
+//     t-table; date formatting fixed to 'en-US'.
+//   - Styles: the template keeps these selectors in custom.css; memo-init has
+//     no custom.css, so they live here as a global style block (theme tokens
+//     from src/styles/theme.css apply).
+//
+// Custom features preserved 1:1:
+//   - Author / Date / Tags header
+//   - Reading-Progress-Bar (fixed top, scroll-driven width)
+//   - Custom TOC sidebar (sticky, IntersectionObserver active-highlight)
+//   - Share buttons (Twitter, LinkedIn, Copy link)
+//   - Related-Posts grid
+
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro'
+import { getCollection, render } from 'astro:content'
+
+const { post } = Astro.props
+
+const { Content, headings } = await render( post )
+
+const base = '/blog'
+const siteOrigin = 'https://memo-init.github.io'
+
+const formattedDate = post.data.date.toLocaleDateString( 'en-US', { year: 'numeric', month: 'long', day: 'numeric' } )
+
+const showDrafts = import.meta.env.DEV
+const allPosts = ( await getCollection( 'blog', ( { data } ) => showDrafts || !data.draft ) )
+    .filter( ( p ) => p.id !== post.id )
+    .slice( 0, 3 )
+
+const canonicalUrl = `${ base }/${ post.id }/`
+
+// Filtering down to depth <= 3 outside the JSX expression. The Astro
+// template compiler misreads "h.depth <= 3" inside curly braces as the
+// start of an HTML opening tag (`<= 3`) — keeping the comparison in
+// plain TypeScript avoids the parser ambiguity.
+const tocHeadings = headings.filter( ( h ) => h.depth <= 3 )
+
+// The custom in-content TOC mirrors Starlight's On-this-page widget.
+// We hide Starlight's built-in TOC (tableOfContents: false) because the
+// post layout renders its own sticky aside.
+const frontmatter = {
+    title: post.data.title,
+    description: post.data.description || '',
+    template: 'splash',
+    tableOfContents: false,
+    pagefind: true
+}
+---
+
+<StarlightPage frontmatter={frontmatter}>
+    <div class="blog-post__progress" id="reading-progress" aria-hidden="true"></div>
+
+    <div class="blog-post" id="main-content">
+        <a class="blog-post__back" href={`${ base }/`}>← All posts</a>
+
+        <article class="blog-post__article">
+            <header class="blog-post__header">
+                <h1 class="blog-post__title">{post.data.title}</h1>
+
+                <div class="blog-post__author">
+                    <div class="blog-post__avatar" aria-hidden="true"></div>
+                    <div class="blog-post__meta">
+                        <div class="blog-post__author-name">{post.data.author}</div>
+                        <div class="blog-post__date">{formattedDate}</div>
+                    </div>
+                </div>
+
+                { post.data.tags.length > 0 && (
+                    <div class="blog-post__tags">
+                        { post.data.tags.map( ( tag ) => (
+                            <span class="blog-post__tag">#{tag}</span>
+                        ) )}
+                    </div>
+                )}
+            </header>
+
+            <div class="blog-post__layout">
+                <div class="blog-post__content">
+                    <Content />
+
+                    <div class="blog-post__share">
+                        <span class="blog-post__share-label">Share:</span>
+                        <a class="blog-post__share-link" href={`https://twitter.com/intent/tweet?text=${ encodeURIComponent( post.data.title ) }&url=${ siteOrigin }${ canonicalUrl }`} target="_blank" rel="noopener">Twitter</a>
+                        <a class="blog-post__share-link" href={`https://www.linkedin.com/sharing/share-offsite/?url=${ siteOrigin }${ canonicalUrl }`} target="_blank" rel="noopener">LinkedIn</a>
+                        <button class="blog-post__share-link" data-copy-url={canonicalUrl}>Copy link</button>
+                    </div>
+                </div>
+
+                { headings.length > 0 && (
+                    <aside class="blog-post__toc" aria-label="On this page">
+                        <div class="blog-post__toc-title">ON THIS PAGE</div>
+                        <ul class="blog-post__toc-list">
+                            { tocHeadings.map( ( h ) => (
+                                <li class={`blog-post__toc-item blog-post__toc-item--depth-${ h.depth }`}>
+                                    <a href={`#${ h.slug }`}>{h.text}</a>
+                                </li>
+                            ) )}
+                        </ul>
+                    </aside>
+                )}
+            </div>
+        </article>
+
+        { allPosts.length > 0 && (
+            <section class="blog-post__related" aria-label="Related posts">
+                <h2 class="blog-post__related-title">Related Posts</h2>
+                <div class="blog-post__related-grid">
+                    { allPosts.map( ( p ) => (
+                        <a class="blog-post__related-card" href={`${ base }/${ p.id }/`}>
+                            <span class="blog-post__related-tag">{p.data.tags[ 0 ] || 'post'}</span>
+                            <h3 class="blog-post__related-card-title">{p.data.title}</h3>
+                            <p class="blog-post__related-card-desc">{p.data.description}</p>
+                        </a>
+                    ) )}
+                </div>
+            </section>
+        )}
+    </div>
+</StarlightPage>
+
+<style is:global>
+    /* Blog post styles — ported from flowmcp.github.io custom.css
+     * (BLOG POST section). Reading-Progress-Bar, Sticky-TOC, Share,
+     * Related-Posts. Tokens come from src/styles/theme.css. */
+    .blog-post__progress {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 3px;
+        width: 0;
+        background: var(--accent);
+        z-index: 100;
+        transition: width 0.1s linear;
+    }
+
+    .blog-post {
+        max-width: 1100px;
+        margin: 2rem auto 4rem;
+        padding: 0 1.5rem;
+    }
+
+    .blog-post__back {
+        color: var(--accent);
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 500;
+        margin-bottom: 1.5rem;
+        display: inline-block;
+    }
+
+    .blog-post__header { margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border); }
+    .blog-post__title { font-size: clamp(2rem, 4vw, 2.5rem); font-weight: 800; margin: 0 0 1.5rem; line-height: 1.2; }
+    .blog-post__author { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; }
+    .blog-post__avatar { width: 48px; height: 48px; background: linear-gradient(135deg, var(--accent), var(--sl-color-accent-high)); border-radius: 50%; flex-shrink: 0; }
+    .blog-post__author-name { font-weight: 600; color: var(--text-primary); font-size: 14px; }
+    .blog-post__date { font-size: 12px; color: var(--text-inactive); }
+    .blog-post__tags { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .blog-post__tag { color: var(--accent); font-size: 13px; font-weight: 500; }
+
+    .blog-post__layout { display: grid; grid-template-columns: 1fr 240px; gap: 3rem; }
+    .blog-post__content { min-width: 0; }
+    .blog-post__content h2 { margin-top: 2.5rem; font-size: 1.5rem; }
+    .blog-post__content h3 { margin-top: 2rem; font-size: 1.25rem; }
+    .blog-post__content p { margin: 1rem 0; }
+    .blog-post__content code { background: var(--bg-card); padding: 0.1rem 0.4rem; border-radius: 4px; font-size: 0.9em; }
+    .blog-post__content pre { background: var(--bg-card); padding: 1rem; border-radius: 8px; overflow-x: auto; border: 1px solid var(--border); }
+    .blog-post__content pre code { background: transparent; padding: 0; }
+    .blog-post__content img { max-width: 100%; border-radius: 8px; }
+    .blog-post__content a { color: var(--accent); }
+
+    /* Blog TOC styling aligned with the main-site On-this-page widget —
+     * same active state (accent + sidebar-active-bg), same typographic
+     * rhythm, smooth transitions. */
+    .blog-post__toc { position: sticky; top: 6rem; align-self: flex-start; padding: 1rem; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; max-height: calc(100vh - 8rem); overflow-y: auto; }
+    .blog-post__toc-title { font-size: 13px; font-weight: 700; color: var(--group-title); letter-spacing: 0.8px; margin-bottom: 0.75rem; text-transform: uppercase; }
+    .blog-post__toc-list { list-style: none; padding: 0; margin: 0; }
+    .blog-post__toc-item { margin: 0.15rem 0; font-size: 14px; }
+    .blog-post__toc-item a { color: var(--text-inactive); text-decoration: none; display: block; padding: 4px 12px; border-radius: 6px; transition: background-color 0.15s ease, color 0.15s ease; }
+    .blog-post__toc-item a:hover { color: var(--text-primary); }
+    .blog-post__toc-item--active a,
+    .blog-post__toc-item a[aria-current] { background: var(--sidebar-active-bg); color: var(--accent); font-weight: 500; }
+    .blog-post__toc-item--depth-3 a { padding-left: 28px; }
+
+    .blog-post__share { display: flex; gap: 1rem; align-items: center; margin: 2rem 0; padding-top: 1.5rem; border-top: 1px solid var(--border); flex-wrap: wrap; }
+    .blog-post__share-label { color: var(--text-inactive); font-size: 13px; }
+    .blog-post__share-link { color: var(--accent); text-decoration: none; font-size: 13px; font-weight: 500; background: none; border: none; cursor: pointer; padding: 0; font-family: inherit; }
+    .blog-post__share-link:hover { text-decoration: underline; }
+
+    .blog-post__related { margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--border); }
+    .blog-post__related-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem; }
+    .blog-post__related-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; }
+    .blog-post__related-card { display: block; padding: 1rem; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; text-decoration: none; color: inherit; transition: all 0.15s; }
+    .blog-post__related-card:hover { border-color: var(--accent); }
+    .blog-post__related-tag { color: var(--accent); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+    .blog-post__related-card-title { font-size: 1rem; font-weight: 700; margin: 0.5rem 0; }
+    .blog-post__related-card-desc { color: var(--text-inactive); font-size: 13px; margin: 0; }
+
+    @media (max-width: 800px) {
+        .blog-post__layout { grid-template-columns: 1fr; }
+        .blog-post__toc { position: static; max-height: none; }
+    }
+</style>
+
+<script>
+    const progressBar = document.getElementById( 'reading-progress' )
+    if( progressBar ) {
+        const update = () => {
+            const h = document.documentElement
+            const scrolled = h.scrollTop
+            const total = h.scrollHeight - h.clientHeight
+            const pct = total > 0 ? ( scrolled / total ) * 100 : 0
+            progressBar.style.width = pct + '%'
+        }
+        window.addEventListener( 'scroll', update, { passive: true } )
+        update()
+    }
+
+    document.querySelectorAll( '[data-copy-url]' ).forEach( ( btn ) => {
+        btn.addEventListener( 'click', async () => {
+            const url = 'https://memo-init.github.io' + btn.dataset.copyUrl
+            await navigator.clipboard.writeText( url )
+            const original = btn.textContent
+            btn.textContent = 'Copied!'
+            setTimeout( () => { btn.textContent = original }, 2000 )
+        } )
+    } )
+
+    // Active-position highlighting in the blog TOC. Mirrors Starlight's
+    // built-in TOC behaviour — IntersectionObserver flags the heading
+    // currently in view, the TOC link for that heading gets
+    // aria-current="true", styling is handled via CSS.
+    const tocLinks = Array.from( document.querySelectorAll( '.blog-post__toc-item a' ) )
+    const headings = tocLinks
+        .map( ( link ) => {
+            const id = link.getAttribute( 'href' )?.slice( 1 )
+            return id ? document.getElementById( id ) : null
+        } )
+        .filter( ( el ) => el !== null )
+
+    if( headings.length > 0 && 'IntersectionObserver' in window ) {
+        const setCurrent = ( id ) => {
+            tocLinks.forEach( ( link ) => {
+                const match = link.getAttribute( 'href' ) === '#' + id
+                link.toggleAttribute( 'aria-current', match )
+                link.parentElement?.classList.toggle( 'blog-post__toc-item--active', match )
+            } )
+        }
+
+        const visible = new Set()
+        const observer = new IntersectionObserver( ( entries ) => {
+            entries.forEach( ( entry ) => {
+                if( entry.isIntersecting ) visible.add( entry.target.id )
+                else visible.delete( entry.target.id )
+            } )
+            const first = headings.find( ( h ) => visible.has( h.id ) )
+            if( first ) setCurrent( first.id )
+        }, { rootMargin: '-80px 0px -70% 0px' } )
+
+        headings.forEach( ( h ) => observer.observe( h ) )
+    }
+</script>

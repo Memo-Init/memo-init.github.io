@@ -1,0 +1,13 @@
+---
+import BlogPostLayout from '../../layouts/BlogPostLayout.astro'
+import { getCollection } from 'astro:content'
+
+export async function getStaticPaths() {
+    const includeDrafts = import.meta.env.DEV
+    const posts = await getCollection( 'blog', ( { data } ) => includeDrafts || !data.draft )
+    return posts.map( ( post ) => ( { params: { slug: post.id }, props: { post } } ) )
+}
+
+const { post } = Astro.props
+---
+<BlogPostLayout post={post} />
