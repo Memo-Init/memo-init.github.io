@@ -1,0 +1,47 @@
+/* custom.css — PRD-008 / PRD-010 (Memo 004 Kap 5 + Kap 8)
+ * Styles that complement theme.css: Mermaid card + lightbox and the
+ * "Copy as Markdown" header button. Ported from flowmcp.github.io.
+ */
+
+/* ============ MERMAID ZOOM (PRD-008, Memo 004 Kap 5) ============
+ * Light card background for bare rehype-mermaid inline-svg (dark lines on a dark
+ * canvas are otherwise hard to read) + fullscreen lightbox.
+ */
+.sl-markdown-content svg[id^="mermaid"] {
+    display: block;
+    max-width: 100%;
+    margin: 1.5rem auto;
+    padding: 1.25rem;
+    background: #f6f8fa;
+    border: 1px solid #d0d7de;
+    border-radius: 8px;
+    cursor: zoom-in;
+}
+
+.mermaid-overlay {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background: rgba( 13, 17, 23, 0.85 );
+    z-index: 1000;
+    cursor: zoom-out;
+}
+
+.mermaid-overlay.is-open {
+    display: flex;
+}
+
+.mermaid-overlay__stage {
+    width: 90vw;
+    height: 90vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f6f8fa;
+    border-radius: 8px;
+    padding: 1.5rem;
+    overflow: auto;
+}

@@ -1,0 +1,203 @@
+---
+// HeaderCopyButton.astro — PRD-010 (Memo 004 Kap 8)
+// ONE small icon-only button injected on the heading line of every content page
+// (via the PageTitle override). Click copies the page content as Markdown.
+//
+// Fetches public/markdown-sources/{slug}.md (written by generate-markdown-map.mjs)
+// at click time. Ported from flowmcp.github.io HeaderCopyButton.astro; memo-init
+// is EN-only, so the DE label set is dropped.
+
+const pathname = Astro.url?.pathname ?? ''
+const slug = pathname.replace( /^\/+|\/+$/g, '' )
+
+const labels = {
+    idle: 'Copy as Markdown',
+    done: 'Copied to clipboard',
+    fail: 'Copy failed',
+    aria: 'Copy page content as Markdown'
+}
+---
+
+<button
+    type="button"
+    class="header-copy-md"
+    data-header-copy
+    data-copy-slug={slug}
+    data-label-idle={labels.idle}
+    data-label-done={labels.done}
+    data-label-fail={labels.fail}
+    aria-label={labels.aria}
+    title={labels.idle}
+>
+    <span class="header-copy-md__icon" aria-hidden="true">
+        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+        </svg>
+    </span>
+    <span class="header-copy-md__feedback" data-copy-feedback aria-live="polite"></span>
+</button>
+
+<style>
+    .header-copy-md {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.3rem 0.45rem;
+        font-size: 0.8rem;
+        line-height: 1;
+        color: var(--sl-color-gray-2, #b3b3b3);
+        background: transparent;
+        border: 1px solid var(--sl-color-gray-5, #333);
+        border-radius: 6px;
+        cursor: pointer;
+        vertical-align: middle;
+        transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
+    }
+
+    .header-copy-md:hover {
+        color: var(--sl-color-text-accent, #6aaaff);
+        border-color: var(--sl-color-text-accent, #6aaaff);
+        background: var(--sl-color-gray-6, #2a2a2a);
+    }
+
+    .header-copy-md[data-state="done"] {
+        color: var(--sl-color-text-accent, #6aaaff);
+        border-color: var(--sl-color-text-accent, #6aaaff);
+    }
+
+    .header-copy-md[data-state="fail"] {
+        color: #e35454;
+        border-color: #e35454;
+    }
+
+    .header-copy-md__icon {
+        display: inline-flex;
+        align-items: center;
+    }
+
+    /* feedback text is hidden until a state is set, keeping the button compact */
+    .header-copy-md__feedback {
+        display: none;
+        font-weight: 500;
+        white-space: nowrap;
+    }
+
+    .header-copy-md[data-state] .header-copy-md__feedback {
+        display: inline;
+    }
+</style>
+
+<script>
+    const STATE_DURATION_MS = 2000
+    const FAIL_DURATION_MS = 3000
+
+    const fallbackCopy = ( text ) => {
+        const textarea = document.createElement( 'textarea' )
+        textarea.value = text
+        textarea.setAttribute( 'readonly', '' )
+        textarea.style.position = 'absolute'
+        textarea.style.left = '-9999px'
+        document.body.appendChild( textarea )
+        textarea.select()
+        let ok = false
+        try {
+            ok = document.execCommand( 'copy' )
+        } catch( err ) {
+            ok = false
+        }
+        document.body.removeChild( textarea )
+        return ok
+    }
+
+    const writeToClipboard = async ( text ) => {
+        if( navigator.clipboard && window.isSecureContext ) {
+            try {
+                await navigator.clipboard.writeText( text )
+                return true
+            } catch( err ) {
+                console.warn( '[HeaderCopyButton] navigator.clipboard failed, using fallback', err )
+            }
+        }
+        return fallbackCopy( text )
+    }
+
+    const getPageMarkdown = async ( slug ) => {
+        if( !slug ) { throw new Error( 'HeaderCopyButton: missing slug' ) }
+        const trimmed = slug.replace( /^\/+|\/+$/g, '' )
+        // The slug comes from the URL pathname, so a directory page like /about/
+        // yields slug "about". The generator writes index pages as {dir}/index.md,
+        // so "about" -> about/index.md, not about.md. Try the direct file first,
+        // then fall back to the {slug}/index.md variant for directory-index pages.
+        const directUrl = `/markdown-sources/${ trimmed }.md`
+        const indexUrl = `/markdown-sources/${ trimmed }/index.md`
+
+        const tryFetch = async ( url ) => {
+            const response = await fetch( url )
+            return { url, ok: response.ok, status: response.status, text: response.ok ? await response.text() : null }
+        }
+
+        const direct = await tryFetch( directUrl )
+        if( direct.ok ) { return direct.text }
+
+        const index = await tryFetch( indexUrl )
+        if( index.ok ) { return index.text }
+
+        throw new Error( `HeaderCopyButton: markdown source not found (${ direct.url } -> HTTP ${ direct.status }, ${ index.url } -> HTTP ${ index.status })` )
+    }
+
+    const setState = ( { button, state, text } ) => {
+        const feedback = button.querySelector( '[data-copy-feedback]' )
+        button.setAttribute( 'data-state', state )
+        if( feedback ) { feedback.textContent = text }
+    }
+
+    const revertState = ( { button } ) => {
+        const feedback = button.querySelector( '[data-copy-feedback]' )
+        button.removeAttribute( 'data-state' )
+        if( feedback ) { feedback.textContent = '' }
+    }
+
+    const handleClick = async ( event ) => {
+        const button = event.currentTarget
+        const doneLabel = button.getAttribute( 'data-label-done' ) || 'Copied to clipboard'
+        const failLabel = button.getAttribute( 'data-label-fail' ) || 'Copy failed'
+        const slug = button.getAttribute( 'data-copy-slug' ) || ''
+
+        let payload = ''
+        try {
+            payload = await getPageMarkdown( slug )
+        } catch( err ) {
+            console.error( '[HeaderCopyButton] markdown resolution failed', err )
+            setState( { button, state: 'fail', text: failLabel } )
+            setTimeout( () => revertState( { button } ), FAIL_DURATION_MS )
+            return
+        }
+
+        const ok = await writeToClipboard( payload )
+        if( ok ) {
+            setState( { button, state: 'done', text: doneLabel } )
+            setTimeout( () => revertState( { button } ), STATE_DURATION_MS )
+        } else {
+            console.error( '[HeaderCopyButton] clipboard write failed' )
+            setState( { button, state: 'fail', text: failLabel } )
+            setTimeout( () => revertState( { button } ), FAIL_DURATION_MS )
+        }
+    }
+
+    const init = () => {
+        const buttons = document.querySelectorAll( 'button[data-header-copy]' )
+        buttons.forEach( ( button ) => {
+            if( button.dataset.copyBound === '1' ) { return }
+            button.dataset.copyBound = '1'
+            button.addEventListener( 'click', handleClick )
+        } )
+    }
+
+    if( document.readyState === 'loading' ) {
+        document.addEventListener( 'DOMContentLoaded', init )
+    } else {
+        init()
+    }
+    document.addEventListener( 'astro:page-load', init )
+</script>

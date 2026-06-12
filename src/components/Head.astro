@@ -1,0 +1,16 @@
+---
+// Head override — PRD-008 (Memo 004 Kap 5)
+// Minimal extension of Starlight's default Head: it keeps every default head
+// element (favicons, meta, theme handling) intact via <Default> and only adds
+// the Mermaid-Zoom wiring. The <script> (not is:inline) is bundled by Astro so
+// the ES module import resolves.
+import Default from '@astrojs/starlight/components/Head.astro'
+---
+
+<Default><slot /></Default>
+
+<script>
+    // PRD-008 — Mermaid fullscreen lightbox (rehype-mermaid inline-svg)
+    import { initMermaidZoom } from '../scripts/mermaid-zoom.mjs'
+    initMermaidZoom()
+</script>

@@ -1,0 +1,36 @@
+---
+// PageTitleWithCopy.astro — PRD-010 (Memo 004 Kap 8)
+// Starlight PageTitle override: renders the default page title plus exactly ONE
+// small "Copy as Markdown" button on the heading line of every content page.
+//
+// Suppressed on splash/landing pages (homepage): those hide the page title and
+// have no per-slug markdown source, so the button would otherwise float alone.
+import Default from '@astrojs/starlight/components/PageTitle.astro'
+import HeaderCopyButton from './HeaderCopyButton.astro'
+
+const isSplash = Astro.locals.starlightRoute?.entry?.data?.template === 'splash'
+---
+
+{ isSplash ? (
+    <Default><slot /></Default>
+) : (
+    <div class="page-title-row">
+        <Default><slot /></Default>
+        <HeaderCopyButton />
+    </div>
+) }
+
+<style>
+    .page-title-row {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+    /* keep the button aligned with the top of a multi-line title */
+    .page-title-row > :global(*:first-child) {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+</style>

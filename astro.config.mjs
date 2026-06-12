@@ -1,16 +1,15 @@
 // @ts-check
 import { defineConfig } from 'astro/config'
 import starlight from '@astrojs/starlight'
+import rehypeMermaid from 'rehype-mermaid'
 import { SidebarLoader } from './src/data/sidebar.mjs'
 
-// TODO (mermaid): rehype-mermaid with the `inline-svg` strategy requires a
-// headless Chromium at build time. The GitHub Pages deploy workflow installs
-// Playwright Chromium (`npx playwright install --with-deps chromium`) before the
-// build, so mermaid rendering is enabled in CI. It is intentionally OMITTED from
-// this local config so `npm run build` stays browser-free and green on any host.
-// To enable locally: install chromium, then add
-//   import rehypeMermaid from 'rehype-mermaid'
-//   markdown: { rehypePlugins: [ [ rehypeMermaid, { strategy: 'inline-svg', mermaidConfig: { theme: 'neutral' } } ] ] }
+// Mermaid (PRD-008, Memo 004 Kap 5): rehype-mermaid with the `inline-svg`
+// strategy renders diagrams to bare <svg id="mermaid-…"> at build time. It needs
+// a headless Chromium — the GitHub Pages deploy workflow installs Playwright
+// Chromium (`npx playwright install --with-deps chromium`) before the build, and
+// it is available locally too. Theme `neutral` keeps the diagrams readable on the
+// light card background defined in src/styles/theme.css.
 
 const sidebarData = SidebarLoader.buildSidebar()
 const specVersionShort = sidebarData.specVersion.replace( /\.0$/, '' )
@@ -18,6 +17,11 @@ const specBadge = { text: `v${ specVersionShort }`, variant: 'note' }
 
 export default defineConfig({
     site: 'https://memo-init.github.io',
+    markdown: {
+        rehypePlugins: [
+            [ rehypeMermaid, { strategy: 'inline-svg', mermaidConfig: { theme: 'neutral' } } ]
+        ]
+    },
     integrations: [
         starlight({
             title: 'memo-init',
@@ -33,12 +37,15 @@ export default defineConfig({
                 { tag: 'link', attrs: { rel: 'icon', type: 'image/png', sizes: '512x512', href: '/favicon-512.png' } }
             ],
             customCss: [
-                './src/styles/theme.css'
+                './src/styles/theme.css',
+                './src/styles/custom.css'
             ],
             components: {
+                Head: './src/components/Head.astro',
                 Header: './src/components/Header.astro',
                 Footer: './src/components/Footer.astro',
                 MobileMenuToggle: './src/components/MobileMenuToggle.astro',
+                PageTitle: './src/components/PageTitleWithCopy.astro',
                 Search: './src/components/SearchCustom.astro'
             },
             social: [

@@ -199,6 +199,16 @@ import Default from '@astrojs/starlight/components/Search.astro'
     } )()
 </script>
 
+<script>
+    // PRD-009: Search keyboard navigation (↑/↓/Enter/"/"/Escape, aria-activedescendant).
+    // ES module import (not is:inline) so Astro bundles search-keyboard.mjs.
+    // Escape note: the script's closeAll() and the is:inline wireEscape() above
+    // both close the dialog on Escape — both are idempotent (closing a closed
+    // dialog + removeAttribute are no-ops), so there is no double-handler bug.
+    import { init } from '../scripts/search-keyboard.mjs'
+    init()
+</script>
+
 <style is:global>
     /* One hover area per result item (ported) ------------------------- */
     .pagefind-ui__result {
@@ -260,6 +270,35 @@ import Default from '@astrojs/starlight/components/Search.astro'
         background-color: var(--sidebar-active-bg, rgba(121, 192, 255, 0.08));
         color: var(--accent, #79c0ff);
         outline: none;
+    }
+
+    /* PRD-009: keyboard selection (↑/↓) of the suggestion links visible.
+     * Empty-state links have no opaque children — a simple outline suffices. */
+    .search-empty-state__link.is-active {
+        background-color: var(--sidebar-active-bg, rgba(121, 192, 255, 0.12));
+        color: var(--accent, #79c0ff);
+        outline: 2px solid var(--accent, #79c0ff);
+        outline-offset: -2px;
+    }
+
+    /* PRD-009: visible highlight for the keyboard-navigated result.
+     * search-keyboard.mjs toggles .is-active on arrow up/down. */
+    .pagefind-ui__result.is-active {
+        position: relative;
+        background-color: var(--sidebar-active-bg, rgba(121, 192, 255, 0.12));
+    }
+    /* The outline must sit ABOVE the opaque, position:relative result children
+     * (Starlight) which would otherwise cover it. An absolutely positioned
+     * overlay pseudo-element with z-index draws the selection frame over the
+     * children — pointer-events:none lets clicks through. */
+    .pagefind-ui__result.is-active::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border: 2px solid var(--accent, #79c0ff);
+        border-radius: 6px;
+        pointer-events: none;
+        z-index: 3;
     }
 
     /* Results container keeps a visible minimum height ----------------- */

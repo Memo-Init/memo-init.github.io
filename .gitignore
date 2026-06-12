@@ -16,3 +16,6 @@ src/content/docs/specification/
 src/content/docs/workbench/
 src/data/manifest.json
 public/llms.txt
+public/docs-llms.txt
+public/llms-full.txt
+public/markdown-sources/

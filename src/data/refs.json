@@ -1,0 +1,33 @@
+{
+    "schemaVersion": "refs/1.0.0",
+    "spec": {
+        "currentVersion": "1.0.0",
+        "specRepo": "https://github.com/memo-init/spec",
+        "llmsTxtUrl": "https://memo-init.github.io/llms-full.txt"
+    },
+    "docs": {
+        "canonical": "https://memo-init.github.io",
+        "entryPoints": {
+            "overview": "/specification/overview/",
+            "philosophy": "/specification/philosophy/",
+            "memoSop": "/specification/memo-sop-entrypoint/",
+            "workbench": "/workbench/overview/"
+        }
+    },
+    "github": {
+        "organization": "https://github.com/memo-init",
+        "specRepo": "https://github.com/memo-init/spec"
+    },
+    "llmsFiles": {
+        "indexUrl": "https://memo-init.github.io/llms.txt",
+        "docsUrl": "https://memo-init.github.io/docs-llms.txt",
+        "fullUrl": "https://memo-init.github.io/llms-full.txt"
+    },
+    "robotsTxt": {
+        "publishedLlmsFiles": [
+            "/llms.txt",
+            "/docs-llms.txt",
+            "/llms-full.txt"
+        ]
+    }
+}
