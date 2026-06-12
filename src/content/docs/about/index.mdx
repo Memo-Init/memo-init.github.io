@@ -1,0 +1,34 @@
+---
+title: About memo-init
+description: What memo-init is, why it exists, and how the pieces fit together.
+---
+{/* PAGEFIND-META-START */}
+<span style="display:none" data-pagefind-meta="section">About</span>
+{/* PAGEFIND-META-END */}
+
+> *memo-init turns long, unstructured input — typically dictated voice transcripts — into discrete, executable work orders, and governs the human-AI interaction that clarifies open questions before implementation begins.*
+
+memo-init is a memo-driven approach to agentic software engineering. The developer plans; the AI implements autonomously and self-evaluates. The whole process is written down as an RFC-style specification, reverse-engineered from a real, working system.
+
+## Mission
+
+A **memo** is a versioned strategy document. It starts as a first revision, iterates through revisions until the developer finalizes it, and then drives a rollout that produces real artifacts — code, repositories, documentation. The memo is the single highest authority over its own rollout.
+
+The specification is **inductive**: it is reverse-engineered from a real, working system and written in the normative style of an RFC (MUST / SHOULD / MAY, per BCP 14). Guardrails come first — plan before you build, keep context clean, never delete, always leave an audit trail.
+
+## What's inside
+
+| Part | What it covers |
+|------|----------------|
+| **Specification** | The core RFC-style chapters: input paths, the five-step pipeline, memo strategies, revisions, phases & PRDs, rollout, orchestration, git & security. |
+| **Workbench** | The sub-spec for the meta-orchestration layer: project structure, requirements profiles, the tools registry, strands, wikis, and the no-deletion trash policy. |
+| **Viewer** | The live memo editor and transcript surface. |
+| **Prompt generator** | The validated engine that turns memo structure into agent prompts. |
+| **Core** | The underlying skills, agents, and task machinery. |
+| **Website** | This site, built from the spec payload, also served as `/llms.txt` for machines. |
+
+## Next steps
+
+- Start with the [Specification Overview](/specification/overview/).
+- Browse the [Workbench sub-spec](/workbench/overview/).
+- Read the machine-friendly index at [`/llms.txt`](/llms.txt).
