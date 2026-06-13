@@ -2,6 +2,7 @@
 import { defineConfig } from 'astro/config'
 import starlight from '@astrojs/starlight'
 import rehypeMermaid from 'rehype-mermaid'
+import remarkGfm from 'remark-gfm'
 import { SidebarLoader } from './src/data/sidebar.mjs'
 
 // Mermaid (PRD-008, Memo 004 Kap 5): rehype-mermaid with the `inline-svg`
@@ -18,6 +19,9 @@ const specBadge = { text: `v${ specVersionShort }`, variant: 'note' }
 export default defineConfig({
     site: 'https://memo-init.github.io',
     markdown: {
+        remarkPlugins: [
+            remarkGfm
+        ],
         rehypePlugins: [
             [ rehypeMermaid, { strategy: 'inline-svg', mermaidConfig: { theme: 'neutral' } } ]
         ]
