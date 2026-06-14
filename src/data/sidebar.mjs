@@ -15,10 +15,17 @@ const MANIFEST_PATH = resolve( __dirname, 'manifest.json' )
 
 const GROUP_LABELS = {
     introduction: 'Introduction',
+    input: 'Input',
+    execution: 'Execution',
+    finalization: 'Finalization',
+    requirements: 'Requirements',
+    tools: 'Tools',
+    behavior: 'Behavior',
+    foundations: 'Foundations',
     specification: 'Core Specification'
 }
 
-const GROUP_ORDER = [ 'introduction', 'specification' ]
+const GROUP_ORDER = [ 'introduction', 'input', 'execution', 'finalization', 'requirements', 'tools', 'behavior', 'foundations' ]
 
 
 class SidebarLoader {
