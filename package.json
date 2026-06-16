@@ -8,8 +8,8 @@
         "node": ">=22"
     },
     "scripts": {
-        "dev": "astro dev",
-        "start": "astro dev",
+        "dev": "npm run sync-spec && npm run generate-markdown-map && astro dev",
+        "start": "npm run sync-spec && npm run generate-markdown-map && astro dev",
         "sync-spec": "node scripts/sync-spec.mjs",
         "favicons": "node scripts/generate-favicons.mjs",
         "generate-llms-txt": "node scripts/generate-llms-txt.mjs",
