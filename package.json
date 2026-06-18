@@ -27,6 +27,7 @@
         "@astrojs/rss": "^4.0.18",
         "@astrojs/starlight": "^0.38.2",
         "astro": "^6.4.6",
+        "memo-init-spec": "github:Memo-Init/spec#f65d565a5195f1727b01ba2d795eda280f3946de",
         "rehype-mermaid": "^3.0.0",
         "sharp": "^0.34.2"
     },
