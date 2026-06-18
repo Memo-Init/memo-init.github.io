@@ -1,7 +1,7 @@
 {
     "schemaVersion": "refs/1.0.0",
     "spec": {
-        "currentVersion": "1.0.0",
+        "currentVersion": "0.1.0",
         "specRepo": "https://github.com/memo-init/spec",
         "llmsTxtUrl": "https://memo-init.github.io/llms-full.txt"
     },

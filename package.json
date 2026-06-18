@@ -11,6 +11,7 @@
         "dev": "npm run sync-spec && npm run generate-markdown-map && astro dev",
         "start": "npm run sync-spec && npm run generate-markdown-map && astro dev",
         "sync-spec": "node scripts/sync-spec.mjs",
+        "fetch-refs": "node scripts/fetch-refs.mjs",
         "favicons": "node scripts/generate-favicons.mjs",
         "generate-llms-txt": "node scripts/generate-llms-txt.mjs",
         "generate-markdown-map": "node scripts/generate-markdown-map.mjs",
@@ -19,13 +20,13 @@
         "check:mermaid": "node scripts/check-mermaid-renders.mjs",
         "check:published-llms": "node scripts/check-published-llms.mjs",
         "test:pagefind": "node scripts/test-pagefind.mjs",
-        "build": "npm run sync-spec && npm run generate-llms-txt && npm run generate-markdown-map && npm run generate-robots-txt && npm run inject-pagefind-meta && astro build",
+        "build": "npm run sync-spec && npm run fetch-refs && npm run generate-llms-txt && npm run generate-markdown-map && npm run generate-robots-txt && npm run inject-pagefind-meta && astro build",
         "preview": "astro preview"
     },
     "dependencies": {
         "@astrojs/rss": "^4.0.18",
         "@astrojs/starlight": "^0.38.2",
-        "astro": "^6.0.1",
+        "astro": "^6.4.6",
         "rehype-mermaid": "^3.0.0",
         "sharp": "^0.34.2"
     },
