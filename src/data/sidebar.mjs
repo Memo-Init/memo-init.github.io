@@ -18,14 +18,14 @@ const GROUP_LABELS = {
     input: 'Input',
     execution: 'Execution',
     finalization: 'Finalization',
-    requirements: 'Requirements',
-    tools: 'Tools',
+    procedure: 'Procedure',
     behavior: 'Behavior',
+    health: 'Health',
     foundations: 'Foundations',
     specification: 'Core Specification'
 }
 
-const GROUP_ORDER = [ 'introduction', 'input', 'execution', 'finalization', 'requirements', 'tools', 'behavior', 'foundations' ]
+const GROUP_ORDER = [ 'introduction', 'input', 'execution', 'finalization', 'procedure', 'behavior', 'health', 'foundations' ]
 
 
 class SidebarLoader {
