@@ -14,6 +14,7 @@ dist/
 # Regenerated on every `npm run build` from the sibling spec repo — not committed.
 src/content/docs/specification/
 src/content/docs/workbench/
+src/content/docs/sop/
 src/data/manifest.json
 public/llms.txt
 public/docs-llms.txt

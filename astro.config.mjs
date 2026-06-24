@@ -13,8 +13,10 @@ import { SidebarLoader } from './src/data/sidebar.mjs'
 // light card background defined in src/styles/theme.css.
 
 const sidebarData = SidebarLoader.buildSidebar()
-const specVersionShort = sidebarData.specVersion.replace( /\.0$/, '' )
-const specBadge = { text: `v${ specVersionShort }`, variant: 'note' }
+const shortVersion = ( version ) => version.replace( /\.0$/, '' )
+const specBadge = { text: `v${ shortVersion( sidebarData.specVersion ) }`, variant: 'note' }
+const workbenchBadge = { text: `v${ shortVersion( sidebarData.workbenchVersion ) }`, variant: 'note' }
+const sopBadge = { text: `v${ shortVersion( sidebarData.sopVersion ) }`, variant: 'note' }
 
 export default defineConfig({
     site: 'https://memo-init.github.io',
@@ -66,7 +68,14 @@ export default defineConfig({
                 {
                     label: 'Workbench',
                     collapsed: true,
+                    badge: workbenchBadge,
                     items: sidebarData.workbenchItems
+                },
+                {
+                    label: 'SOP',
+                    collapsed: true,
+                    badge: sopBadge,
+                    items: sidebarData.sopItems
                 },
                 { label: 'For LLMs', slug: 'for-llms' }
             ]

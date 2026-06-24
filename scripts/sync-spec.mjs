@@ -1,12 +1,14 @@
 // sync-spec.mjs — pull the spec docs payload into the Starlight content tree.
 //
 // Source (local sibling spec repo):
-//   ../spec/generated/docs-payload/        — 19 core chapters + manifest.json
-//   ../spec/generated/docs-payload/workbench/ — 7 workbench sub-spec chapters
+//   ../spec/generated/docs-payload/             — core chapters + manifest.json
+//   ../spec/generated/docs-payload/workbench/   — workbench spec chapters
+//   ../spec/generated/docs-payload/sop/         — sop spec chapters
 //
 // Targets:
 //   src/content/docs/specification/   — core Starlight content collection
 //   src/content/docs/workbench/       — workbench Starlight content collection
+//   src/content/docs/sop/             — sop Starlight content collection
 //   src/data/manifest.json            — consumed by src/data/sidebar.mjs
 //
 // Normalization: the payload frontmatter carries richer metadata (spec_version,
@@ -15,11 +17,12 @@
 // to a SAFE frontmatter set: { title, description }. The remaining metadata lives in
 // manifest.json (the single source of truth for ordering and grouping).
 //
-// Link rewriting: workbench chapters cross-link each other via /specification/<slug>/
-// in the payload, but their Starlight routes live under /workbench/<slug>/. Those
-// links are rewritten to the correct route. Core links already point at /specification/.
+// Link rewriting: workbench/sop chapters cross-link each other via /specification/<slug>/
+// in the payload, but their Starlight routes live under /workbench/<slug>/ resp.
+// /sop/<slug>/. Those links are rewritten to the correct family route. Core links
+// already point at /specification/.
 
-import { mkdir, writeFile, readFile, readdir } from 'node:fs/promises'
+import { mkdir, writeFile, readFile, readdir, rm } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
@@ -34,9 +37,11 @@ const SPEC_REPO_DIR = process.env.SPEC_REPO_DIR
     : path.resolve( REPO_ROOT, '..', 'spec' )
 const SPEC_REPO_PAYLOAD = path.resolve( SPEC_REPO_DIR, 'generated', 'docs-payload' )
 const WORKBENCH_PAYLOAD_SRC = path.resolve( SPEC_REPO_PAYLOAD, 'workbench' )
+const SOP_PAYLOAD_SRC = path.resolve( SPEC_REPO_PAYLOAD, 'sop' )
 
 const CONTENT_SPEC_DIR = path.resolve( REPO_ROOT, 'src', 'content', 'docs', 'specification' )
 const CONTENT_WORKBENCH_DIR = path.resolve( REPO_ROOT, 'src', 'content', 'docs', 'workbench' )
+const CONTENT_SOP_DIR = path.resolve( REPO_ROOT, 'src', 'content', 'docs', 'sop' )
 
 const DATA_DIR = path.resolve( REPO_ROOT, 'src', 'data' )
 const DATA_MANIFEST = path.join( DATA_DIR, 'manifest.json' )
@@ -51,15 +56,42 @@ class SpecSync {
         const manifest = await SpecSync.#loadManifest()
         await SpecSync.#prepareTargetDirs()
 
-        const workbenchSlugs = SpecSync.#collectWorkbenchSlugs( { manifest } )
+        const workbenchSlugs = SpecSync.#collectFamilySlugs( { block: manifest.workbench } )
+        const sopSlugs = SpecSync.#collectFamilySlugs( { block: manifest.sop } )
 
         const stats = {
             syncedCore: 0,
-            syncedWorkbench: 0
+            syncedWorkbench: 0,
+            syncedSop: 0
         }
 
         await SpecSync.#syncCore( { manifest, stats } )
-        await SpecSync.#syncWorkbench( { manifest, workbenchSlugs, stats } )
+        await SpecSync.#syncFamily( {
+            block: manifest.workbench,
+            payloadSrc: WORKBENCH_PAYLOAD_SRC,
+            contentDir: CONTENT_WORKBENCH_DIR,
+            slugRoot: 'workbench',
+            rewriteSlugs: workbenchSlugs,
+            statsKey: 'syncedWorkbench',
+            stats
+        } )
+        await SpecSync.#syncFamily( {
+            block: manifest.sop,
+            payloadSrc: SOP_PAYLOAD_SRC,
+            contentDir: CONTENT_SOP_DIR,
+            slugRoot: 'sop',
+            rewriteSlugs: sopSlugs,
+            statsKey: 'syncedSop',
+            stats
+        } )
+
+        // Prune orphan content pages — files whose slug is no longer in the manifest
+        // (a chapter that was renamed/removed in the spec). These three content dirs are
+        // entirely sync-owned, so a slug not in the manifest is a stale build artifact.
+        const coreSlugs = SpecSync.#collectFamilySlugs( { block: { files: manifest.files } } )
+        stats.prunedCore = await SpecSync.#pruneContentDir( { contentDir: CONTENT_SPEC_DIR, slugs: coreSlugs } )
+        stats.prunedWorkbench = await SpecSync.#pruneContentDir( { contentDir: CONTENT_WORKBENCH_DIR, slugs: workbenchSlugs } )
+        stats.prunedSop = await SpecSync.#pruneContentDir( { contentDir: CONTENT_SOP_DIR, slugs: sopSlugs } )
 
         await mkdir( DATA_DIR, { recursive: true } )
         await writeFile(
@@ -98,14 +130,31 @@ class SpecSync {
     static async #prepareTargetDirs() {
         await mkdir( CONTENT_SPEC_DIR, { recursive: true } )
         await mkdir( CONTENT_WORKBENCH_DIR, { recursive: true } )
+        await mkdir( CONTENT_SOP_DIR, { recursive: true } )
     }
 
 
-    static #collectWorkbenchSlugs( { manifest } ) {
-        const files = manifest.workbench && Array.isArray( manifest.workbench.files )
-            ? manifest.workbench.files
-            : []
+    static #collectFamilySlugs( { block } ) {
+        const files = block && Array.isArray( block.files ) ? block.files : []
         return new Set( files.map( ( file ) => file.slug ) )
+    }
+
+
+    // Remove .md content pages whose slug is not in the given manifest slug set.
+    // Returns the number of pruned files. Safe: these content dirs are sync-owned.
+    static async #pruneContentDir( { contentDir, slugs } ) {
+        let names
+        try {
+            names = await readdir( contentDir )
+        } catch( error ) {
+            return 0
+        }
+        const orphans = names
+            .filter( ( name ) => name.endsWith( '.md' ) )
+            .filter( ( name ) => !slugs.has( name.replace( /\.md$/, '' ) ) )
+        await Promise.all( orphans.map( ( name ) => rm( path.join( contentDir, name ), { force: true } ) ) )
+        orphans.forEach( ( name ) => console.log( `  - pruned orphan: ${ contentDir }/${ name }` ) )
+        return orphans.length
     }
 
 
@@ -116,7 +165,7 @@ class SpecSync {
                 throw new Error( `Manifest references missing core file: ${ fileEntry.filename }` )
             }
             const raw = await readFile( srcPath, 'utf-8' )
-            const normalized = SpecSync.#normalize( { raw, fileEntry, rewriteWorkbenchSlugs: null } )
+            const normalized = SpecSync.#normalize( { raw, fileEntry, rewriteSlugs: null, slugRoot: null } )
             const dst = path.join( CONTENT_SPEC_DIR, `${ fileEntry.slug }.md` )
             await writeFile( dst, normalized, 'utf-8' )
             stats.syncedCore += 1
@@ -125,38 +174,38 @@ class SpecSync {
     }
 
 
-    static async #syncWorkbench( { manifest, workbenchSlugs, stats } ) {
-        if( !manifest.workbench || !Array.isArray( manifest.workbench.files ) ) {
+    // Generic sibling-family sync (workbench, sop). No-op when the family block is
+    // absent/empty (so a not-yet-authored family does not break the sync).
+    static async #syncFamily( { block, payloadSrc, contentDir, slugRoot, rewriteSlugs, statsKey, stats } ) {
+        if( !block || !Array.isArray( block.files ) || block.files.length === 0 ) {
             return
         }
-        if( !existsSync( WORKBENCH_PAYLOAD_SRC ) ) {
-            throw new Error( `manifest.workbench present but workbench payload missing: ${ WORKBENCH_PAYLOAD_SRC }` )
+        if( !existsSync( payloadSrc ) ) {
+            throw new Error( `manifest.${ slugRoot } present but payload missing: ${ payloadSrc }` )
         }
-        const tasks = manifest.workbench.files.map( async ( fileEntry ) => {
-            const srcPath = path.join( WORKBENCH_PAYLOAD_SRC, fileEntry.filename )
+        const tasks = block.files.map( async ( fileEntry ) => {
+            const srcPath = path.join( payloadSrc, fileEntry.filename )
             if( !existsSync( srcPath ) ) {
-                throw new Error( `manifest.workbench references missing file: workbench/${ fileEntry.filename }` )
+                throw new Error( `manifest.${ slugRoot } references missing file: ${ slugRoot }/${ fileEntry.filename }` )
             }
             const raw = await readFile( srcPath, 'utf-8' )
-            const normalized = SpecSync.#normalize( { raw, fileEntry, rewriteWorkbenchSlugs: workbenchSlugs } )
-            const dst = path.join( CONTENT_WORKBENCH_DIR, `${ fileEntry.slug }.md` )
+            const normalized = SpecSync.#normalize( { raw, fileEntry, rewriteSlugs, slugRoot } )
+            const dst = path.join( contentDir, `${ fileEntry.slug }.md` )
             await writeFile( dst, normalized, 'utf-8' )
-            stats.syncedWorkbench += 1
+            stats[ statsKey ] += 1
         } )
         await Promise.all( tasks )
     }
 
 
-    // Reduce frontmatter to the safe Starlight set and (for workbench) rewrite
-    // /specification/<slug>/ links to /workbench/<slug>/ where slug is a known
-    // workbench chapter. Returns the rewritten file text.
+    // Reduce frontmatter to the safe Starlight set and (for a sibling family) rewrite
+    // /specification/<slug>/ links to /<slugRoot>/<slug>/ where slug is a known family
+    // chapter. Returns the rewritten file text.
     //
-    // The payload frontmatter values are already valid YAML (correctly quoted by
-    // the generator). Rather than re-parse and re-escape (which double-escaped
-    // embedded \" sequences and broke YAML), the original whole lines for the safe
-    // keys are kept VERBATIM. Each safe key is matched as a top-level frontmatter
-    // line (key followed by ":"), preserving its exact quoting.
-    static #normalize( { raw, fileEntry, rewriteWorkbenchSlugs } ) {
+    // The payload frontmatter values are already valid YAML (correctly quoted by the
+    // generator). Rather than re-parse and re-escape, the original whole lines for the
+    // safe keys are kept VERBATIM.
+    static #normalize( { raw, fileEntry, rewriteSlugs, slugRoot } ) {
         const match = raw.match( /^---\n([\s\S]*?)\n---\n?/ )
         if( !match ) {
             throw new Error( `${ fileEntry.filename }: no frontmatter block found` )
@@ -166,8 +215,8 @@ class SpecSync {
 
         let body = raw.slice( match[ 0 ].length ).replace( /^\n+/, '' )
 
-        if( rewriteWorkbenchSlugs ) {
-            body = SpecSync.#rewriteWorkbenchLinks( { body, workbenchSlugs: rewriteWorkbenchSlugs } )
+        if( rewriteSlugs && slugRoot ) {
+            body = SpecSync.#rewriteFamilyLinks( { body, slugs: rewriteSlugs, slugRoot } )
         }
 
         return `${ safeFm }${ body }`
@@ -192,10 +241,10 @@ class SpecSync {
     }
 
 
-    static #rewriteWorkbenchLinks( { body, workbenchSlugs } ) {
+    static #rewriteFamilyLinks( { body, slugs, slugRoot } ) {
         return body.replace( /\/specification\/([a-z0-9-]+)\//g, ( whole, slug ) => {
-            if( workbenchSlugs.has( slug ) ) {
-                return `/workbench/${ slug }/`
+            if( slugs.has( slug ) ) {
+                return `/${ slugRoot }/${ slug }/`
             }
             return whole
         } )
@@ -208,6 +257,7 @@ class SpecSync {
         console.log( `  Source:        ${ SPEC_REPO_PAYLOAD }` )
         console.log( `  Core chapters: ${ stats.syncedCore } -> ${ CONTENT_SPEC_DIR }` )
         console.log( `  Workbench:     ${ stats.syncedWorkbench } -> ${ CONTENT_WORKBENCH_DIR }` )
+        console.log( `  SOP:           ${ stats.syncedSop } -> ${ CONTENT_SOP_DIR }` )
         console.log( `  Manifest:      ${ DATA_MANIFEST }` )
     }
 }

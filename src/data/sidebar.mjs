@@ -1,9 +1,11 @@
 // Sidebar loader for the memo-init documentation site.
 // Reads src/data/manifest.json (synced from the spec repo by sync-spec.mjs) and
-// produces the Starlight sidebar items for the core specification (grouped by
-// sidebar_group) plus the workbench sub-spec. Robust by design — if the manifest
-// is missing (fresh checkout, sync not yet run), a minimal sidebar is returned so
-// the build never hard-fails on a cold start.
+// produces the Starlight sidebar items for three sibling spec families:
+//   - core specification (grouped by sidebar_group)
+//   - workbench spec (own grouped sidebar + own version)
+//   - sop spec (thin, single Introduction group + own version)
+// Robust by design — if the manifest is missing (fresh checkout, sync not yet run),
+// a minimal sidebar is returned so the build never hard-fails on a cold start.
 
 import { readFileSync, existsSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
@@ -14,10 +16,8 @@ const __dirname = dirname( fileURLToPath( import.meta.url ) )
 const MANIFEST_PATH = resolve( __dirname, 'manifest.json' )
 
 // Lockstep with repos/spec/scripts/generate-manifest.mjs SIDEBAR_GROUP_BY_ORDER (Memo 041
-// Teil A). The umbrella groups `foundations` and `finalization` were dissolved (F2=A) into the
-// finer 12-group set; five new keys were added (initialisierung, revision, agents, git, skills).
-// `workbench` is rendered as its own separate section (#buildWorkbenchItems), not via these maps.
-// `specification` stays as the ultimate label fallback for any unlabelled extra key.
+// Teil A). The 12-group set for the core spec; `specification` stays as the ultimate label
+// fallback for any unlabelled extra key.
 const GROUP_LABELS = {
     introduction: 'Introduction',
     input: 'Input',
@@ -35,6 +35,22 @@ const GROUP_LABELS = {
 
 const GROUP_ORDER = [ 'introduction', 'input', 'initialisierung', 'revision', 'execution', 'procedure', 'behavior', 'health', 'agents', 'git', 'skills' ]
 
+// Workbench family groups (lockstep with workbenchSidebarGroupFromFilename in the spec
+// generate-manifest.mjs): Introduction → Folders → CLI → Tools → Reference.
+const WORKBENCH_GROUP_LABELS = {
+    introduction: 'Introduction',
+    folders: 'Folders',
+    cli: 'CLI & Scripts',
+    tools: 'Tools',
+    reference: 'Reference'
+}
+
+const WORKBENCH_GROUP_ORDER = [ 'introduction', 'folders', 'cli', 'tools', 'reference' ]
+
+// SOP family is deliberately thin — a single Introduction group.
+const SOP_GROUP_LABELS = { introduction: 'Introduction' }
+const SOP_GROUP_ORDER = [ 'introduction' ]
+
 
 class SidebarLoader {
     static buildSidebar() {
@@ -43,14 +59,30 @@ class SidebarLoader {
             return SidebarLoader.#minimalSidebar()
         }
 
-        const specVersion = typeof manifest.spec_version === 'string' && manifest.spec_version.length > 0
-            ? manifest.spec_version
-            : '0.0.0'
+        const specVersion = SidebarLoader.#versionOf( { value: manifest.spec_version } )
+        const workbenchVersion = SidebarLoader.#versionOf( { value: manifest.workbench?.version } )
+        const sopVersion = SidebarLoader.#versionOf( { value: manifest.sop?.version } )
 
         const specItems = SidebarLoader.#buildSpecItems( { manifest } )
-        const workbenchItems = SidebarLoader.#buildWorkbenchItems( { manifest } )
+        const workbenchItems = SidebarLoader.#buildFamilyItems( {
+            files: manifest.workbench?.files,
+            slugRoot: 'workbench',
+            groupOrder: WORKBENCH_GROUP_ORDER,
+            groupLabels: WORKBENCH_GROUP_LABELS
+        } )
+        const sopItems = SidebarLoader.#buildFamilyItems( {
+            files: manifest.sop?.files,
+            slugRoot: 'sop',
+            groupOrder: SOP_GROUP_ORDER,
+            groupLabels: SOP_GROUP_LABELS
+        } )
 
-        return { specItems, workbenchItems, specVersion }
+        return { specItems, workbenchItems, sopItems, specVersion, workbenchVersion, sopVersion }
+    }
+
+
+    static #versionOf( { value } ) {
+        return typeof value === 'string' && value.length > 0 ? value : '0.0.0'
     }
 
 
@@ -95,16 +127,36 @@ class SidebarLoader {
     }
 
 
-    static #buildWorkbenchItems( { manifest } ) {
-        const workbench = manifest.workbench && Array.isArray( manifest.workbench.files )
-            ? manifest.workbench.files
-            : []
-        const sorted = [ ...workbench ].sort( ( a, b ) => a.order - b.order )
+    // Generic per-family grouped sidebar (workbench, sop). Groups files by
+    // sidebar_group, orders groups by groupOrder (unknown keys appended), and renders
+    // each file under slugRoot/<slug>.
+    static #buildFamilyItems( { files, slugRoot, groupOrder, groupLabels } ) {
+        const list = Array.isArray( files ) ? files : []
+        const sorted = [ ...list ].sort( ( a, b ) => a.order - b.order )
 
-        return sorted.map( ( file ) => {
-            return {
+        const buckets = {}
+        sorted.forEach( ( file ) => {
+            const key = typeof file.sidebar_group === 'string' ? file.sidebar_group : 'introduction'
+            if( !buckets[ key ] ) {
+                buckets[ key ] = []
+            }
+            buckets[ key ].push( {
                 label: file.title,
-                slug: `workbench/${ file.slug }`
+                slug: `${ slugRoot }/${ file.slug }`
+            } )
+        } )
+
+        const orderedKeys = groupOrder.filter( ( key ) => buckets[ key ] )
+        const extraKeys = Object
+            .keys( buckets )
+            .filter( ( key ) => !groupOrder.includes( key ) )
+        const allKeys = [ ...orderedKeys, ...extraKeys ]
+
+        return allKeys.map( ( key ) => {
+            return {
+                label: groupLabels[ key ] ?? key,
+                collapsed: false,
+                items: buckets[ key ]
             }
         } )
     }
@@ -114,7 +166,10 @@ class SidebarLoader {
         return {
             specItems: [],
             workbenchItems: [],
-            specVersion: '0.0.0'
+            sopItems: [],
+            specVersion: '0.0.0',
+            workbenchVersion: '0.0.0',
+            sopVersion: '0.0.0'
         }
     }
 }
