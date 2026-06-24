@@ -13,19 +13,27 @@ import { dirname, resolve } from 'node:path'
 const __dirname = dirname( fileURLToPath( import.meta.url ) )
 const MANIFEST_PATH = resolve( __dirname, 'manifest.json' )
 
+// Lockstep with repos/spec/scripts/generate-manifest.mjs SIDEBAR_GROUP_BY_ORDER (Memo 041
+// Teil A). The umbrella groups `foundations` and `finalization` were dissolved (F2=A) into the
+// finer 12-group set; five new keys were added (initialisierung, revision, agents, git, skills).
+// `workbench` is rendered as its own separate section (#buildWorkbenchItems), not via these maps.
+// `specification` stays as the ultimate label fallback for any unlabelled extra key.
 const GROUP_LABELS = {
     introduction: 'Introduction',
     input: 'Input',
+    initialisierung: 'Initialisierung',
+    revision: 'Revision',
     execution: 'Execution',
-    finalization: 'Finalization',
     procedure: 'Procedure',
     behavior: 'Behavior',
     health: 'Health',
-    foundations: 'Foundations',
+    agents: 'Agents',
+    git: 'Git & Repo',
+    skills: 'Skills',
     specification: 'Core Specification'
 }
 
-const GROUP_ORDER = [ 'introduction', 'input', 'execution', 'finalization', 'procedure', 'behavior', 'health', 'foundations' ]
+const GROUP_ORDER = [ 'introduction', 'input', 'initialisierung', 'revision', 'execution', 'procedure', 'behavior', 'health', 'agents', 'git', 'skills' ]
 
 
 class SidebarLoader {
