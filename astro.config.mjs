@@ -16,11 +16,18 @@ const sidebarData = SidebarLoader.buildSidebar()
 const shortVersion = ( version ) => version.replace( /\.0$/, '' )
 const specBadge = { text: `v${ shortVersion( sidebarData.specVersion ) }`, variant: 'note' }
 const workbenchBadge = { text: `v${ shortVersion( sidebarData.workbenchVersion ) }`, variant: 'note' }
-const sopBadge = { text: `v${ shortVersion( sidebarData.sopVersion ) }`, variant: 'note' }
 const sessionBadge = { text: `v${ shortVersion( sidebarData.sessionVersion ) }`, variant: 'note' }
 
 export default defineConfig({
     site: 'https://memo-init.github.io',
+    // Memo 049: the SOP family was folded into the Session family. The former /sop/… URLs
+    // keep resolving via these redirects (the SOP overview slug becomes /session/sop/).
+    redirects: {
+        '/sop/overview/': '/session/sop/',
+        '/sop/common-denominator/': '/session/common-denominator/',
+        '/sop/instances/': '/session/instances/',
+        '/sop/conventions/': '/session/conventions/'
+    },
     markdown: {
         remarkPlugins: [
             remarkGfm
@@ -71,12 +78,6 @@ export default defineConfig({
                     collapsed: true,
                     badge: workbenchBadge,
                     items: sidebarData.workbenchItems
-                },
-                {
-                    label: 'SOP',
-                    collapsed: true,
-                    badge: sopBadge,
-                    items: sidebarData.sopItems
                 },
                 {
                     label: 'Session',

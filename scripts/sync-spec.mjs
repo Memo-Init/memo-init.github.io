@@ -3,12 +3,12 @@
 // Source (local sibling spec repo):
 //   ../spec/generated/docs-payload/             — core chapters + manifest.json
 //   ../spec/generated/docs-payload/workbench/   — workbench spec chapters
-//   ../spec/generated/docs-payload/sop/         — sop spec chapters
+//   ../spec/generated/docs-payload/session/     — session spec chapters (absorbs the former SOP family, Memo 049)
 //
 // Targets:
 //   src/content/docs/specification/   — core Starlight content collection
 //   src/content/docs/workbench/       — workbench Starlight content collection
-//   src/content/docs/sop/             — sop Starlight content collection
+//   src/content/docs/session/         — session Starlight content collection
 //   src/data/manifest.json            — consumed by src/data/sidebar.mjs
 //
 // Normalization: the payload frontmatter carries richer metadata (spec_version,
@@ -17,9 +17,9 @@
 // to a SAFE frontmatter set: { title, description }. The remaining metadata lives in
 // manifest.json (the single source of truth for ordering and grouping).
 //
-// Link rewriting: workbench/sop chapters cross-link each other via /specification/<slug>/
+// Link rewriting: workbench/session chapters cross-link each other via /specification/<slug>/
 // in the payload, but their Starlight routes live under /workbench/<slug>/ resp.
-// /sop/<slug>/. Those links are rewritten to the correct family route. Core links
+// /session/<slug>/. Those links are rewritten to the correct family route. Core links
 // already point at /specification/.
 
 import { mkdir, writeFile, readFile, readdir, rm } from 'node:fs/promises'
@@ -37,12 +37,10 @@ const SPEC_REPO_DIR = process.env.SPEC_REPO_DIR
     : path.resolve( REPO_ROOT, '..', 'spec' )
 const SPEC_REPO_PAYLOAD = path.resolve( SPEC_REPO_DIR, 'generated', 'docs-payload' )
 const WORKBENCH_PAYLOAD_SRC = path.resolve( SPEC_REPO_PAYLOAD, 'workbench' )
-const SOP_PAYLOAD_SRC = path.resolve( SPEC_REPO_PAYLOAD, 'sop' )
 const SESSION_PAYLOAD_SRC = path.resolve( SPEC_REPO_PAYLOAD, 'session' )
 
 const CONTENT_SPEC_DIR = path.resolve( REPO_ROOT, 'src', 'content', 'docs', 'specification' )
 const CONTENT_WORKBENCH_DIR = path.resolve( REPO_ROOT, 'src', 'content', 'docs', 'workbench' )
-const CONTENT_SOP_DIR = path.resolve( REPO_ROOT, 'src', 'content', 'docs', 'sop' )
 const CONTENT_SESSION_DIR = path.resolve( REPO_ROOT, 'src', 'content', 'docs', 'session' )
 
 const DATA_DIR = path.resolve( REPO_ROOT, 'src', 'data' )
@@ -59,13 +57,11 @@ class SpecSync {
         await SpecSync.#prepareTargetDirs()
 
         const workbenchSlugs = SpecSync.#collectFamilySlugs( { block: manifest.workbench } )
-        const sopSlugs = SpecSync.#collectFamilySlugs( { block: manifest.sop } )
         const sessionSlugs = SpecSync.#collectFamilySlugs( { block: manifest.session } )
 
         const stats = {
             syncedCore: 0,
             syncedWorkbench: 0,
-            syncedSop: 0,
             syncedSession: 0
         }
 
@@ -77,15 +73,6 @@ class SpecSync {
             slugRoot: 'workbench',
             rewriteSlugs: workbenchSlugs,
             statsKey: 'syncedWorkbench',
-            stats
-        } )
-        await SpecSync.#syncFamily( {
-            block: manifest.sop,
-            payloadSrc: SOP_PAYLOAD_SRC,
-            contentDir: CONTENT_SOP_DIR,
-            slugRoot: 'sop',
-            rewriteSlugs: sopSlugs,
-            statsKey: 'syncedSop',
             stats
         } )
         await SpecSync.#syncFamily( {
@@ -104,7 +91,6 @@ class SpecSync {
         const coreSlugs = SpecSync.#collectFamilySlugs( { block: { files: manifest.files } } )
         stats.prunedCore = await SpecSync.#pruneContentDir( { contentDir: CONTENT_SPEC_DIR, slugs: coreSlugs } )
         stats.prunedWorkbench = await SpecSync.#pruneContentDir( { contentDir: CONTENT_WORKBENCH_DIR, slugs: workbenchSlugs } )
-        stats.prunedSop = await SpecSync.#pruneContentDir( { contentDir: CONTENT_SOP_DIR, slugs: sopSlugs } )
         stats.prunedSession = await SpecSync.#pruneContentDir( { contentDir: CONTENT_SESSION_DIR, slugs: sessionSlugs } )
 
         await mkdir( DATA_DIR, { recursive: true } )
@@ -144,7 +130,6 @@ class SpecSync {
     static async #prepareTargetDirs() {
         await mkdir( CONTENT_SPEC_DIR, { recursive: true } )
         await mkdir( CONTENT_WORKBENCH_DIR, { recursive: true } )
-        await mkdir( CONTENT_SOP_DIR, { recursive: true } )
         await mkdir( CONTENT_SESSION_DIR, { recursive: true } )
     }
 
@@ -272,7 +257,6 @@ class SpecSync {
         console.log( `  Source:        ${ SPEC_REPO_PAYLOAD }` )
         console.log( `  Core chapters: ${ stats.syncedCore } -> ${ CONTENT_SPEC_DIR }` )
         console.log( `  Workbench:     ${ stats.syncedWorkbench } -> ${ CONTENT_WORKBENCH_DIR }` )
-        console.log( `  SOP:           ${ stats.syncedSop } -> ${ CONTENT_SOP_DIR }` )
         console.log( `  Session:       ${ stats.syncedSession } -> ${ CONTENT_SESSION_DIR }` )
         console.log( `  Manifest:      ${ DATA_MANIFEST }` )
     }

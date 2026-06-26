@@ -3,7 +3,7 @@
 // produces the Starlight sidebar items for three sibling spec families:
 //   - core specification (grouped by sidebar_group)
 //   - workbench spec (own grouped sidebar + own version)
-//   - sop spec (thin, single Introduction group + own version)
+//   - session spec (own grouped sidebar + own version; absorbs the former SOP family, Memo 049)
 // Robust by design — if the manifest is missing (fresh checkout, sync not yet run),
 // a minimal sidebar is returned so the build never hard-fails on a cold start.
 
@@ -36,24 +36,33 @@ const GROUP_LABELS = {
 const GROUP_ORDER = [ 'introduction', 'input', 'initialisierung', 'revision', 'execution', 'procedure', 'behavior', 'health', 'agents', 'git', 'skills' ]
 
 // Workbench family groups (lockstep with workbenchSidebarGroupFromFilename in the spec
-// generate-manifest.mjs): Introduction → Folders → CLI → Tools → Reference.
+// generate-manifest.mjs, Memo 049 Kap 9): Introduction → Root → Projects → Folders →
+// Custom → CLI → Tools → Core. All labels are Capitalized (the Kap 9 display rule — the
+// former map left 'core'/'wiki'/'custom' unlabelled, so they rendered raw lowercase).
 const WORKBENCH_GROUP_LABELS = {
     introduction: 'Introduction',
+    root: 'Root',
+    projects: 'Projects',
     folders: 'Folders',
+    custom: 'Custom',
     cli: 'CLI & Scripts',
     tools: 'Tools',
-    reference: 'Reference'
+    core: 'Core'
 }
 
-const WORKBENCH_GROUP_ORDER = [ 'introduction', 'folders', 'cli', 'tools', 'reference' ]
+const WORKBENCH_GROUP_ORDER = [ 'introduction', 'root', 'projects', 'folders', 'custom', 'cli', 'tools', 'core' ]
 
-// SOP family is deliberately thin — a single Introduction group.
-const SOP_GROUP_LABELS = { introduction: 'Introduction' }
-const SOP_GROUP_ORDER = [ 'introduction' ]
-
-// Session family (Genesis Root) is deliberately thin — a single Introduction group.
-const SESSION_GROUP_LABELS = { introduction: 'Introduction' }
-const SESSION_GROUP_ORDER = [ 'introduction' ]
+// Session family (Genesis Root + absorbed SOP area, Memo 049): Introduction → SOP →
+// Genesis Root → Enforcement → CLI → Recovery. Labels Capitalized.
+const SESSION_GROUP_LABELS = {
+    introduction: 'Introduction',
+    sop: 'SOP',
+    'genesis-root': 'Genesis Root',
+    enforcement: 'Enforcement',
+    cli: 'CLI',
+    recovery: 'Recovery'
+}
+const SESSION_GROUP_ORDER = [ 'introduction', 'sop', 'genesis-root', 'enforcement', 'cli', 'recovery' ]
 
 
 class SidebarLoader {
@@ -65,7 +74,6 @@ class SidebarLoader {
 
         const specVersion = SidebarLoader.#versionOf( { value: manifest.spec_version } )
         const workbenchVersion = SidebarLoader.#versionOf( { value: manifest.workbench?.version } )
-        const sopVersion = SidebarLoader.#versionOf( { value: manifest.sop?.version } )
         const sessionVersion = SidebarLoader.#versionOf( { value: manifest.session?.version } )
 
         const specItems = SidebarLoader.#buildSpecItems( { manifest } )
@@ -75,12 +83,6 @@ class SidebarLoader {
             groupOrder: WORKBENCH_GROUP_ORDER,
             groupLabels: WORKBENCH_GROUP_LABELS
         } )
-        const sopItems = SidebarLoader.#buildFamilyItems( {
-            files: manifest.sop?.files,
-            slugRoot: 'sop',
-            groupOrder: SOP_GROUP_ORDER,
-            groupLabels: SOP_GROUP_LABELS
-        } )
         const sessionItems = SidebarLoader.#buildFamilyItems( {
             files: manifest.session?.files,
             slugRoot: 'session',
@@ -88,7 +90,7 @@ class SidebarLoader {
             groupLabels: SESSION_GROUP_LABELS
         } )
 
-        return { specItems, workbenchItems, sopItems, sessionItems, specVersion, workbenchVersion, sopVersion, sessionVersion }
+        return { specItems, workbenchItems, sessionItems, specVersion, workbenchVersion, sessionVersion }
     }
 
 
@@ -177,11 +179,9 @@ class SidebarLoader {
         return {
             specItems: [],
             workbenchItems: [],
-            sopItems: [],
             sessionItems: [],
             specVersion: '0.0.0',
             workbenchVersion: '0.0.0',
-            sopVersion: '0.0.0',
             sessionVersion: '0.0.0'
         }
     }
