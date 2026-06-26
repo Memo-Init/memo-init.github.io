@@ -38,10 +38,12 @@ const SPEC_REPO_DIR = process.env.SPEC_REPO_DIR
 const SPEC_REPO_PAYLOAD = path.resolve( SPEC_REPO_DIR, 'generated', 'docs-payload' )
 const WORKBENCH_PAYLOAD_SRC = path.resolve( SPEC_REPO_PAYLOAD, 'workbench' )
 const SOP_PAYLOAD_SRC = path.resolve( SPEC_REPO_PAYLOAD, 'sop' )
+const SESSION_PAYLOAD_SRC = path.resolve( SPEC_REPO_PAYLOAD, 'session' )
 
 const CONTENT_SPEC_DIR = path.resolve( REPO_ROOT, 'src', 'content', 'docs', 'specification' )
 const CONTENT_WORKBENCH_DIR = path.resolve( REPO_ROOT, 'src', 'content', 'docs', 'workbench' )
 const CONTENT_SOP_DIR = path.resolve( REPO_ROOT, 'src', 'content', 'docs', 'sop' )
+const CONTENT_SESSION_DIR = path.resolve( REPO_ROOT, 'src', 'content', 'docs', 'session' )
 
 const DATA_DIR = path.resolve( REPO_ROOT, 'src', 'data' )
 const DATA_MANIFEST = path.join( DATA_DIR, 'manifest.json' )
@@ -58,11 +60,13 @@ class SpecSync {
 
         const workbenchSlugs = SpecSync.#collectFamilySlugs( { block: manifest.workbench } )
         const sopSlugs = SpecSync.#collectFamilySlugs( { block: manifest.sop } )
+        const sessionSlugs = SpecSync.#collectFamilySlugs( { block: manifest.session } )
 
         const stats = {
             syncedCore: 0,
             syncedWorkbench: 0,
-            syncedSop: 0
+            syncedSop: 0,
+            syncedSession: 0
         }
 
         await SpecSync.#syncCore( { manifest, stats } )
@@ -84,6 +88,15 @@ class SpecSync {
             statsKey: 'syncedSop',
             stats
         } )
+        await SpecSync.#syncFamily( {
+            block: manifest.session,
+            payloadSrc: SESSION_PAYLOAD_SRC,
+            contentDir: CONTENT_SESSION_DIR,
+            slugRoot: 'session',
+            rewriteSlugs: sessionSlugs,
+            statsKey: 'syncedSession',
+            stats
+        } )
 
         // Prune orphan content pages — files whose slug is no longer in the manifest
         // (a chapter that was renamed/removed in the spec). These three content dirs are
@@ -92,6 +105,7 @@ class SpecSync {
         stats.prunedCore = await SpecSync.#pruneContentDir( { contentDir: CONTENT_SPEC_DIR, slugs: coreSlugs } )
         stats.prunedWorkbench = await SpecSync.#pruneContentDir( { contentDir: CONTENT_WORKBENCH_DIR, slugs: workbenchSlugs } )
         stats.prunedSop = await SpecSync.#pruneContentDir( { contentDir: CONTENT_SOP_DIR, slugs: sopSlugs } )
+        stats.prunedSession = await SpecSync.#pruneContentDir( { contentDir: CONTENT_SESSION_DIR, slugs: sessionSlugs } )
 
         await mkdir( DATA_DIR, { recursive: true } )
         await writeFile(
@@ -131,6 +145,7 @@ class SpecSync {
         await mkdir( CONTENT_SPEC_DIR, { recursive: true } )
         await mkdir( CONTENT_WORKBENCH_DIR, { recursive: true } )
         await mkdir( CONTENT_SOP_DIR, { recursive: true } )
+        await mkdir( CONTENT_SESSION_DIR, { recursive: true } )
     }
 
 
@@ -258,6 +273,7 @@ class SpecSync {
         console.log( `  Core chapters: ${ stats.syncedCore } -> ${ CONTENT_SPEC_DIR }` )
         console.log( `  Workbench:     ${ stats.syncedWorkbench } -> ${ CONTENT_WORKBENCH_DIR }` )
         console.log( `  SOP:           ${ stats.syncedSop } -> ${ CONTENT_SOP_DIR }` )
+        console.log( `  Session:       ${ stats.syncedSession } -> ${ CONTENT_SESSION_DIR }` )
         console.log( `  Manifest:      ${ DATA_MANIFEST }` )
     }
 }

@@ -15,6 +15,7 @@ dist/
 src/content/docs/specification/
 src/content/docs/workbench/
 src/content/docs/sop/
+src/content/docs/session/
 src/data/manifest.json
 public/llms.txt
 public/docs-llms.txt

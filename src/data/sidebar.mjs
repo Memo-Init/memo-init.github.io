@@ -51,6 +51,10 @@ const WORKBENCH_GROUP_ORDER = [ 'introduction', 'folders', 'cli', 'tools', 'refe
 const SOP_GROUP_LABELS = { introduction: 'Introduction' }
 const SOP_GROUP_ORDER = [ 'introduction' ]
 
+// Session family (Genesis Root) is deliberately thin — a single Introduction group.
+const SESSION_GROUP_LABELS = { introduction: 'Introduction' }
+const SESSION_GROUP_ORDER = [ 'introduction' ]
+
 
 class SidebarLoader {
     static buildSidebar() {
@@ -62,6 +66,7 @@ class SidebarLoader {
         const specVersion = SidebarLoader.#versionOf( { value: manifest.spec_version } )
         const workbenchVersion = SidebarLoader.#versionOf( { value: manifest.workbench?.version } )
         const sopVersion = SidebarLoader.#versionOf( { value: manifest.sop?.version } )
+        const sessionVersion = SidebarLoader.#versionOf( { value: manifest.session?.version } )
 
         const specItems = SidebarLoader.#buildSpecItems( { manifest } )
         const workbenchItems = SidebarLoader.#buildFamilyItems( {
@@ -76,8 +81,14 @@ class SidebarLoader {
             groupOrder: SOP_GROUP_ORDER,
             groupLabels: SOP_GROUP_LABELS
         } )
+        const sessionItems = SidebarLoader.#buildFamilyItems( {
+            files: manifest.session?.files,
+            slugRoot: 'session',
+            groupOrder: SESSION_GROUP_ORDER,
+            groupLabels: SESSION_GROUP_LABELS
+        } )
 
-        return { specItems, workbenchItems, sopItems, specVersion, workbenchVersion, sopVersion }
+        return { specItems, workbenchItems, sopItems, sessionItems, specVersion, workbenchVersion, sopVersion, sessionVersion }
     }
 
 
@@ -167,9 +178,11 @@ class SidebarLoader {
             specItems: [],
             workbenchItems: [],
             sopItems: [],
+            sessionItems: [],
             specVersion: '0.0.0',
             workbenchVersion: '0.0.0',
-            sopVersion: '0.0.0'
+            sopVersion: '0.0.0',
+            sessionVersion: '0.0.0'
         }
     }
 }
