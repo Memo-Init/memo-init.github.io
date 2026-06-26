@@ -17,6 +17,7 @@ const shortVersion = ( version ) => version.replace( /\.0$/, '' )
 const specBadge = { text: `v${ shortVersion( sidebarData.specVersion ) }`, variant: 'note' }
 const workbenchBadge = { text: `v${ shortVersion( sidebarData.workbenchVersion ) }`, variant: 'note' }
 const sopBadge = { text: `v${ shortVersion( sidebarData.sopVersion ) }`, variant: 'note' }
+const sessionBadge = { text: `v${ shortVersion( sidebarData.sessionVersion ) }`, variant: 'note' }
 
 export default defineConfig({
     site: 'https://memo-init.github.io',
@@ -76,6 +77,12 @@ export default defineConfig({
                     collapsed: true,
                     badge: sopBadge,
                     items: sidebarData.sopItems
+                },
+                {
+                    label: 'Session',
+                    collapsed: true,
+                    badge: sessionBadge,
+                    items: sidebarData.sessionItems
                 },
                 { label: 'For LLMs', slug: 'for-llms' }
             ]
