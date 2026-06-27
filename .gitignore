@@ -17,6 +17,9 @@ src/content/docs/workbench/
 src/content/docs/sop/
 src/content/docs/session/
 src/data/manifest.json
+src/data/spec-manifest.core.json
+src/data/spec-manifest.workbench.json
+src/data/spec-manifest.session.json
 public/llms.txt
 public/docs-llms.txt
 public/llms-full.txt

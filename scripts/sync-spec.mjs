@@ -22,7 +22,7 @@
 // /session/<slug>/. Those links are rewritten to the correct family route. Core links
 // already point at /specification/.
 
-import { mkdir, writeFile, readFile, readdir, rm } from 'node:fs/promises'
+import { mkdir, writeFile, readFile, readdir, rm, copyFile } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
@@ -100,8 +100,29 @@ class SpecSync {
             'utf-8'
         )
 
+        // Memo 052 Kap 8: copy the per-version spec-manifests (the single source of the
+        // sub-category labels/order) into src/data so sidebar.mjs reads them instead of a
+        // hardcoded lockstep map. Absent files degrade gracefully (sidebar.mjs falls back).
+        stats.syncedSpecManifests = await SpecSync.#syncSpecManifests()
+
         SpecSync.#printSummary( { stats } )
         return { stats }
+    }
+
+
+    static async #syncSpecManifests() {
+        const families = [ 'core', 'workbench', 'session' ]
+        const copied = await Promise.all( families.map( async ( family ) => {
+            const src = path.join( SPEC_REPO_PAYLOAD, `spec-manifest.${ family }.json` )
+            if( !existsSync( src ) ) {
+                return 0
+            }
+            const dst = path.join( DATA_DIR, `spec-manifest.${ family }.json` )
+            await copyFile( src, dst )
+            return 1
+        } ) )
+
+        return copied.reduce( ( sum, n ) => sum + n, 0 )
     }
 
 

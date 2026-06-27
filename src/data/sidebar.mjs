@@ -15,57 +15,34 @@ import { dirname, resolve } from 'node:path'
 const __dirname = dirname( fileURLToPath( import.meta.url ) )
 const MANIFEST_PATH = resolve( __dirname, 'manifest.json' )
 
-// Lockstep with repos/spec/scripts/generate-manifest.mjs SIDEBAR_GROUP_BY_ORDER (Memo 041
-// Teil A). The 12-group set for the core spec; `specification` stays as the ultimate label
-// fallback for any unlabelled extra key.
-const GROUP_LABELS = {
-    introduction: 'Introduction',
-    input: 'Input',
-    initialisierung: 'Initialisierung',
-    revision: 'Revision',
-    execution: 'Execution',
-    procedure: 'Procedure',
-    behavior: 'Behavior',
-    health: 'Health',
-    agents: 'Agents',
-    git: 'Git & Repo',
-    skills: 'Skills',
-    specification: 'Core Specification'
+// Memo 052 Kap 8: the per-family group labels + display order are NO LONGER hardcoded here.
+// They are the single source on the spec level — the per-version spec-manifest.json — synced
+// into src/data/spec-manifest.<family>.json by sync-spec.mjs. This dissolves the former
+// "Lockstep with generate-manifest.mjs" duplication. The tiny parse rule is duplicated (not
+// imported) — the schema is small and stable; the spec repo and this site share no dependency.
+// A missing manifest degrades to empty meta (the family then renders id-as-label / appended
+// order), so the build never hard-fails on a cold checkout before sync-spec has run.
+const loadGroupMeta = ( { family } ) => {
+    const manifestPath = resolve( __dirname, `spec-manifest.${ family }.json` )
+    if( !existsSync( manifestPath ) ) {
+        return { labels: {}, order: [] }
+    }
+    try {
+        const parsed = JSON.parse( readFileSync( manifestPath, 'utf8' ) )
+        const groups = Array.isArray( parsed.groups )
+            ? [ ...parsed.groups ].sort( ( a, b ) => ( a.order || 0 ) - ( b.order || 0 ) )
+            : []
+        const labels = {}
+        const order = []
+        groups.forEach( ( group ) => {
+            labels[ group.id ] = group.label
+            order.push( group.id )
+        } )
+        return { labels, order }
+    } catch {
+        return { labels: {}, order: [] }
+    }
 }
-
-const GROUP_ORDER = [ 'introduction', 'input', 'initialisierung', 'revision', 'execution', 'procedure', 'behavior', 'health', 'agents', 'git', 'skills' ]
-
-// Workbench family groups (lockstep with workbenchSidebarGroupFromFilename in the spec
-// generate-manifest.mjs): Introduction → Root → Projects → Folders → Custom → CLI → Tools →
-// Wiki → Storage Formats → Core. Memo 050 Ch14 (F3=A) splits the wiki back out: Wiki (30) and
-// Storage Formats (13-OKF + 18-design) are two sibling top categories, undoing the Memo-047
-// fold into 'folders'. All labels are Capitalized (the display rule).
-const WORKBENCH_GROUP_LABELS = {
-    introduction: 'Introduction',
-    root: 'Root',
-    projects: 'Projects',
-    folders: 'Folders',
-    custom: 'Custom',
-    cli: 'CLI & Scripts',
-    tools: 'Tools',
-    wiki: 'Wiki',
-    storage: 'Storage Formats',
-    core: 'Core'
-}
-
-const WORKBENCH_GROUP_ORDER = [ 'introduction', 'root', 'projects', 'folders', 'custom', 'cli', 'tools', 'wiki', 'storage', 'core' ]
-
-// Session family (Genesis Root + absorbed SOP area, Memo 049): Introduction → SOP →
-// Genesis Root → Enforcement → CLI → Recovery. Labels Capitalized.
-const SESSION_GROUP_LABELS = {
-    introduction: 'Introduction',
-    sop: 'SOP',
-    'genesis-root': 'Genesis Root',
-    enforcement: 'Enforcement',
-    cli: 'CLI',
-    recovery: 'Recovery'
-}
-const SESSION_GROUP_ORDER = [ 'introduction', 'sop', 'genesis-root', 'enforcement', 'cli', 'recovery' ]
 
 
 class SidebarLoader {
@@ -79,18 +56,26 @@ class SidebarLoader {
         const workbenchVersion = SidebarLoader.#versionOf( { value: manifest.workbench?.version } )
         const sessionVersion = SidebarLoader.#versionOf( { value: manifest.session?.version } )
 
-        const specItems = SidebarLoader.#buildSpecItems( { manifest } )
+        const coreMeta = loadGroupMeta( { family: 'core' } )
+        const workbenchMeta = loadGroupMeta( { family: 'workbench' } )
+        const sessionMeta = loadGroupMeta( { family: 'session' } )
+
+        const specItems = SidebarLoader.#buildSpecItems( {
+            manifest,
+            groupOrder: coreMeta.order,
+            groupLabels: coreMeta.labels
+        } )
         const workbenchItems = SidebarLoader.#buildFamilyItems( {
             files: manifest.workbench?.files,
             slugRoot: 'workbench',
-            groupOrder: WORKBENCH_GROUP_ORDER,
-            groupLabels: WORKBENCH_GROUP_LABELS
+            groupOrder: workbenchMeta.order,
+            groupLabels: workbenchMeta.labels
         } )
         const sessionItems = SidebarLoader.#buildFamilyItems( {
             files: manifest.session?.files,
             slugRoot: 'session',
-            groupOrder: SESSION_GROUP_ORDER,
-            groupLabels: SESSION_GROUP_LABELS
+            groupOrder: sessionMeta.order,
+            groupLabels: sessionMeta.labels
         } )
 
         return { specItems, workbenchItems, sessionItems, specVersion, workbenchVersion, sessionVersion }
@@ -111,7 +96,7 @@ class SidebarLoader {
     }
 
 
-    static #buildSpecItems( { manifest } ) {
+    static #buildSpecItems( { manifest, groupOrder, groupLabels } ) {
         const files = Array.isArray( manifest.files ) ? manifest.files : []
         const sorted = [ ...files ].sort( ( a, b ) => a.order - b.order )
 
@@ -127,15 +112,15 @@ class SidebarLoader {
             } )
         } )
 
-        const orderedKeys = GROUP_ORDER.filter( ( key ) => buckets[ key ] )
+        const orderedKeys = groupOrder.filter( ( key ) => buckets[ key ] )
         const extraKeys = Object
             .keys( buckets )
-            .filter( ( key ) => !GROUP_ORDER.includes( key ) )
+            .filter( ( key ) => !groupOrder.includes( key ) )
         const allKeys = [ ...orderedKeys, ...extraKeys ]
 
         return allKeys.map( ( key ) => {
             return {
-                label: GROUP_LABELS[ key ] ?? key,
+                label: groupLabels[ key ] ?? key,
                 collapsed: false,
                 items: buckets[ key ]
             }
