@@ -36,9 +36,10 @@ const GROUP_LABELS = {
 const GROUP_ORDER = [ 'introduction', 'input', 'initialisierung', 'revision', 'execution', 'procedure', 'behavior', 'health', 'agents', 'git', 'skills' ]
 
 // Workbench family groups (lockstep with workbenchSidebarGroupFromFilename in the spec
-// generate-manifest.mjs, Memo 049 Kap 9): Introduction → Root → Projects → Folders →
-// Custom → CLI → Tools → Core. All labels are Capitalized (the Kap 9 display rule — the
-// former map left 'core'/'wiki'/'custom' unlabelled, so they rendered raw lowercase).
+// generate-manifest.mjs): Introduction → Root → Projects → Folders → Custom → CLI → Tools →
+// Wiki → Storage Formats → Core. Memo 050 Ch14 (F3=A) splits the wiki back out: Wiki (30) and
+// Storage Formats (13-OKF + 18-design) are two sibling top categories, undoing the Memo-047
+// fold into 'folders'. All labels are Capitalized (the display rule).
 const WORKBENCH_GROUP_LABELS = {
     introduction: 'Introduction',
     root: 'Root',
@@ -47,10 +48,12 @@ const WORKBENCH_GROUP_LABELS = {
     custom: 'Custom',
     cli: 'CLI & Scripts',
     tools: 'Tools',
+    wiki: 'Wiki',
+    storage: 'Storage Formats',
     core: 'Core'
 }
 
-const WORKBENCH_GROUP_ORDER = [ 'introduction', 'root', 'projects', 'folders', 'custom', 'cli', 'tools', 'core' ]
+const WORKBENCH_GROUP_ORDER = [ 'introduction', 'root', 'projects', 'folders', 'custom', 'cli', 'tools', 'wiki', 'storage', 'core' ]
 
 // Session family (Genesis Root + absorbed SOP area, Memo 049): Introduction → SOP →
 // Genesis Root → Enforcement → CLI → Recovery. Labels Capitalized.
