@@ -121,7 +121,9 @@ class SidebarLoader {
         return allKeys.map( ( key ) => {
             return {
                 label: groupLabels[ key ] ?? key,
-                collapsed: false,
+                // Subcategories collapse by default; Starlight still auto-expands the group that
+                // contains the current page, so navigation opens only the active path (Memo 054 follow-up).
+                collapsed: true,
                 items: buckets[ key ]
             }
         } )
@@ -156,7 +158,9 @@ class SidebarLoader {
         return allKeys.map( ( key ) => {
             return {
                 label: groupLabels[ key ] ?? key,
-                collapsed: false,
+                // Subcategories collapse by default; Starlight still auto-expands the group that
+                // contains the current page, so navigation opens only the active path (Memo 054 follow-up).
+                collapsed: true,
                 items: buckets[ key ]
             }
         } )

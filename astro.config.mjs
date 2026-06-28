@@ -69,7 +69,7 @@ export default defineConfig({
                 { label: 'About', slug: 'about' },
                 {
                     label: 'Specification',
-                    collapsed: false,
+                    collapsed: true,
                     badge: specBadge,
                     items: sidebarData.specItems
                 },
