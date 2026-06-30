@@ -35,9 +35,14 @@ const REPO_ROOT = path.resolve( __dirname, '..' )
 const SPEC_REPO_DIR = process.env.SPEC_REPO_DIR
     ? path.resolve( process.env.SPEC_REPO_DIR )
     : path.resolve( REPO_ROOT, '..', 'spec' )
-const SPEC_REPO_PAYLOAD = path.resolve( SPEC_REPO_DIR, 'generated', 'docs-payload' )
-const WORKBENCH_PAYLOAD_SRC = path.resolve( SPEC_REPO_PAYLOAD, 'workbench' )
-const SESSION_PAYLOAD_SRC = path.resolve( SPEC_REPO_PAYLOAD, 'session' )
+const SPEC_DIST_DIR = path.resolve( SPEC_REPO_DIR, 'dist' )
+const MEMO_SPEC_DIR = path.resolve( SPEC_DIST_DIR, 'memo', '0.1.0', 'spec' )
+const MEMO_DATA_DIR = path.resolve( SPEC_DIST_DIR, 'memo', '0.1.0', 'data' )
+const WORKBENCH_PAYLOAD_SRC = path.resolve( SPEC_DIST_DIR, 'workbench', '0.1.0', 'spec' )
+const WORKBENCH_DATA_DIR = path.resolve( SPEC_DIST_DIR, 'workbench', '0.1.0', 'data' )
+const SESSION_PAYLOAD_SRC = path.resolve( SPEC_DIST_DIR, 'session', '0.1.0', 'spec' )
+const SESSION_DATA_DIR = path.resolve( SPEC_DIST_DIR, 'session', '0.1.0', 'data' )
+const DIST_MANIFEST_JSON = path.resolve( SPEC_DIST_DIR, 'manifest.json' )
 
 const CONTENT_SPEC_DIR = path.resolve( REPO_ROOT, 'src', 'content', 'docs', 'specification' )
 const CONTENT_WORKBENCH_DIR = path.resolve( REPO_ROOT, 'src', 'content', 'docs', 'workbench' )
@@ -111,9 +116,12 @@ class SpecSync {
 
 
     static async #syncSpecManifests() {
-        const families = [ 'core', 'workbench', 'session' ]
-        const copied = await Promise.all( families.map( async ( family ) => {
-            const src = path.join( SPEC_REPO_PAYLOAD, `spec-manifest.${ family }.json` )
+        const sources = [
+            { family: 'core', src: path.join( MEMO_DATA_DIR, 'spec-manifest.json' ) },
+            { family: 'workbench', src: path.join( WORKBENCH_DATA_DIR, 'spec-manifest.json' ) },
+            { family: 'session', src: path.join( SESSION_DATA_DIR, 'spec-manifest.json' ) }
+        ]
+        const copied = await Promise.all( sources.map( async ( { family, src } ) => {
             if( !existsSync( src ) ) {
                 return 0
             }
@@ -127,19 +135,17 @@ class SpecSync {
 
 
     static #assertSource() {
-        if( !existsSync( SPEC_REPO_PAYLOAD ) ) {
-            throw new Error( `Spec payload source missing: ${ SPEC_REPO_PAYLOAD }` )
+        if( !existsSync( MEMO_SPEC_DIR ) ) {
+            throw new Error( `Spec dist source missing: ${ MEMO_SPEC_DIR }` )
         }
-        const manifestPath = path.join( SPEC_REPO_PAYLOAD, 'manifest.json' )
-        if( !existsSync( manifestPath ) ) {
-            throw new Error( `manifest.json missing at ${ manifestPath }` )
+        if( !existsSync( DIST_MANIFEST_JSON ) ) {
+            throw new Error( `manifest.json missing at ${ DIST_MANIFEST_JSON }` )
         }
     }
 
 
     static async #loadManifest() {
-        const manifestPath = path.join( SPEC_REPO_PAYLOAD, 'manifest.json' )
-        const raw = await readFile( manifestPath, 'utf-8' )
+        const raw = await readFile( DIST_MANIFEST_JSON, 'utf-8' )
         const manifest = JSON.parse( raw )
         if( !Array.isArray( manifest.files ) ) {
             throw new Error( 'manifest.files is not an array' )
@@ -181,7 +187,7 @@ class SpecSync {
 
     static async #syncCore( { manifest, stats } ) {
         const tasks = manifest.files.map( async ( fileEntry ) => {
-            const srcPath = path.join( SPEC_REPO_PAYLOAD, fileEntry.filename )
+            const srcPath = path.join( MEMO_SPEC_DIR, fileEntry.filename )
             if( !existsSync( srcPath ) ) {
                 throw new Error( `Manifest references missing core file: ${ fileEntry.filename }` )
             }
@@ -275,7 +281,7 @@ class SpecSync {
     static #printSummary( { stats } ) {
         console.log( '' )
         console.log( 'Spec sync complete' )
-        console.log( `  Source:        ${ SPEC_REPO_PAYLOAD }` )
+        console.log( `  Source (memo): ${ MEMO_SPEC_DIR }` )
         console.log( `  Core chapters: ${ stats.syncedCore } -> ${ CONTENT_SPEC_DIR }` )
         console.log( `  Workbench:     ${ stats.syncedWorkbench } -> ${ CONTENT_WORKBENCH_DIR }` )
         console.log( `  Session:       ${ stats.syncedSession } -> ${ CONTENT_SESSION_DIR }` )
