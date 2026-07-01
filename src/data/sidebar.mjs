@@ -1,9 +1,10 @@
 // Sidebar loader for the memo-init documentation site.
 // Reads src/data/manifest.json (synced from the spec repo by sync-spec.mjs) and
-// produces the Starlight sidebar items for three sibling spec families:
+// produces the Starlight sidebar items for four sibling spec families:
 //   - core specification (grouped by sidebar_group)
 //   - workbench spec (own grouped sidebar + own version)
 //   - session spec (own grouped sidebar + own version; absorbs the former SOP family, Memo 049)
+//   - spec meta-family (the Meta-Specification: how specs are built, Memo 059)
 // Robust by design — if the manifest is missing (fresh checkout, sync not yet run),
 // a minimal sidebar is returned so the build never hard-fails on a cold start.
 
@@ -55,10 +56,12 @@ class SidebarLoader {
         const specVersion = SidebarLoader.#versionOf( { value: manifest.spec_version } )
         const workbenchVersion = SidebarLoader.#versionOf( { value: manifest.workbench?.version } )
         const sessionVersion = SidebarLoader.#versionOf( { value: manifest.session?.version } )
+        const specMetaVersion = SidebarLoader.#versionOf( { value: manifest.spec?.version } )
 
         const coreMeta = loadGroupMeta( { family: 'core' } )
         const workbenchMeta = loadGroupMeta( { family: 'workbench' } )
         const sessionMeta = loadGroupMeta( { family: 'session' } )
+        const specMetaMeta = loadGroupMeta( { family: 'spec' } )
 
         const specItems = SidebarLoader.#buildSpecItems( {
             manifest,
@@ -77,8 +80,14 @@ class SidebarLoader {
             groupOrder: sessionMeta.order,
             groupLabels: sessionMeta.labels
         } )
+        const specMetaItems = SidebarLoader.#buildFamilyItems( {
+            files: manifest.spec?.files,
+            slugRoot: 'spec',
+            groupOrder: specMetaMeta.order,
+            groupLabels: specMetaMeta.labels
+        } )
 
-        return { specItems, workbenchItems, sessionItems, specVersion, workbenchVersion, sessionVersion }
+        return { specItems, workbenchItems, sessionItems, specMetaItems, specVersion, workbenchVersion, sessionVersion, specMetaVersion }
     }
 
 
@@ -172,9 +181,11 @@ class SidebarLoader {
             specItems: [],
             workbenchItems: [],
             sessionItems: [],
+            specMetaItems: [],
             specVersion: '0.0.0',
             workbenchVersion: '0.0.0',
-            sessionVersion: '0.0.0'
+            sessionVersion: '0.0.0',
+            specMetaVersion: '0.0.0'
         }
     }
 }

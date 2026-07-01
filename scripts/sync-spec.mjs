@@ -42,11 +42,14 @@ const WORKBENCH_PAYLOAD_SRC = path.resolve( SPEC_DIST_DIR, 'workbench', '0.1.0',
 const WORKBENCH_DATA_DIR = path.resolve( SPEC_DIST_DIR, 'workbench', '0.1.0', 'data' )
 const SESSION_PAYLOAD_SRC = path.resolve( SPEC_DIST_DIR, 'session', '0.1.0', 'spec' )
 const SESSION_DATA_DIR = path.resolve( SPEC_DIST_DIR, 'session', '0.1.0', 'data' )
+const SPEC_META_PAYLOAD_SRC = path.resolve( SPEC_DIST_DIR, 'spec', '0.1.0', 'spec' )
+const SPEC_META_DATA_DIR = path.resolve( SPEC_DIST_DIR, 'spec', '0.1.0', 'data' )
 const DIST_MANIFEST_JSON = path.resolve( SPEC_DIST_DIR, 'manifest.json' )
 
 const CONTENT_SPEC_DIR = path.resolve( REPO_ROOT, 'src', 'content', 'docs', 'specification' )
 const CONTENT_WORKBENCH_DIR = path.resolve( REPO_ROOT, 'src', 'content', 'docs', 'workbench' )
 const CONTENT_SESSION_DIR = path.resolve( REPO_ROOT, 'src', 'content', 'docs', 'session' )
+const CONTENT_SPEC_META_DIR = path.resolve( REPO_ROOT, 'src', 'content', 'docs', 'spec' )
 
 const DATA_DIR = path.resolve( REPO_ROOT, 'src', 'data' )
 const DATA_MANIFEST = path.join( DATA_DIR, 'manifest.json' )
@@ -63,11 +66,13 @@ class SpecSync {
 
         const workbenchSlugs = SpecSync.#collectFamilySlugs( { block: manifest.workbench } )
         const sessionSlugs = SpecSync.#collectFamilySlugs( { block: manifest.session } )
+        const specMetaSlugs = SpecSync.#collectFamilySlugs( { block: manifest.spec } )
 
         const stats = {
             syncedCore: 0,
             syncedWorkbench: 0,
-            syncedSession: 0
+            syncedSession: 0,
+            syncedSpecMeta: 0
         }
 
         await SpecSync.#syncCore( { manifest, stats } )
@@ -89,14 +94,26 @@ class SpecSync {
             statsKey: 'syncedSession',
             stats
         } )
+        // Fourth family: the Meta-Specification (spec). Routed under /spec/, mirroring the
+        // sibling-family sync (no-op when the block is absent/empty).
+        await SpecSync.#syncFamily( {
+            block: manifest.spec,
+            payloadSrc: SPEC_META_PAYLOAD_SRC,
+            contentDir: CONTENT_SPEC_META_DIR,
+            slugRoot: 'spec',
+            rewriteSlugs: specMetaSlugs,
+            statsKey: 'syncedSpecMeta',
+            stats
+        } )
 
         // Prune orphan content pages — files whose slug is no longer in the manifest
-        // (a chapter that was renamed/removed in the spec). These three content dirs are
+        // (a chapter that was renamed/removed in the spec). These content dirs are
         // entirely sync-owned, so a slug not in the manifest is a stale build artifact.
         const coreSlugs = SpecSync.#collectFamilySlugs( { block: { files: manifest.files } } )
         stats.prunedCore = await SpecSync.#pruneContentDir( { contentDir: CONTENT_SPEC_DIR, slugs: coreSlugs } )
         stats.prunedWorkbench = await SpecSync.#pruneContentDir( { contentDir: CONTENT_WORKBENCH_DIR, slugs: workbenchSlugs } )
         stats.prunedSession = await SpecSync.#pruneContentDir( { contentDir: CONTENT_SESSION_DIR, slugs: sessionSlugs } )
+        stats.prunedSpecMeta = await SpecSync.#pruneContentDir( { contentDir: CONTENT_SPEC_META_DIR, slugs: specMetaSlugs } )
 
         await mkdir( DATA_DIR, { recursive: true } )
         await writeFile(
@@ -119,7 +136,8 @@ class SpecSync {
         const sources = [
             { family: 'core', src: path.join( MEMO_DATA_DIR, 'spec-manifest.json' ) },
             { family: 'workbench', src: path.join( WORKBENCH_DATA_DIR, 'spec-manifest.json' ) },
-            { family: 'session', src: path.join( SESSION_DATA_DIR, 'spec-manifest.json' ) }
+            { family: 'session', src: path.join( SESSION_DATA_DIR, 'spec-manifest.json' ) },
+            { family: 'spec', src: path.join( SPEC_META_DATA_DIR, 'spec-manifest.json' ) }
         ]
         const copied = await Promise.all( sources.map( async ( { family, src } ) => {
             if( !existsSync( src ) ) {
@@ -158,6 +176,7 @@ class SpecSync {
         await mkdir( CONTENT_SPEC_DIR, { recursive: true } )
         await mkdir( CONTENT_WORKBENCH_DIR, { recursive: true } )
         await mkdir( CONTENT_SESSION_DIR, { recursive: true } )
+        await mkdir( CONTENT_SPEC_META_DIR, { recursive: true } )
     }
 
 
@@ -285,6 +304,7 @@ class SpecSync {
         console.log( `  Core chapters: ${ stats.syncedCore } -> ${ CONTENT_SPEC_DIR }` )
         console.log( `  Workbench:     ${ stats.syncedWorkbench } -> ${ CONTENT_WORKBENCH_DIR }` )
         console.log( `  Session:       ${ stats.syncedSession } -> ${ CONTENT_SESSION_DIR }` )
+        console.log( `  Meta-Spec:     ${ stats.syncedSpecMeta } -> ${ CONTENT_SPEC_META_DIR }` )
         console.log( `  Manifest:      ${ DATA_MANIFEST }` )
     }
 }

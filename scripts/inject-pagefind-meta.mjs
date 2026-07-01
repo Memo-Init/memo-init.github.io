@@ -23,7 +23,7 @@ const MARKER_END_MDX = '{/* PAGEFIND-META-END */}'
 
 
 const buildSidebarMapping = () => {
-    const { specItems, workbenchItems, sessionItems } = SidebarLoader.buildSidebar()
+    const { specItems, workbenchItems, sessionItems, specMetaItems } = SidebarLoader.buildSidebar()
     const mapping = {}
 
     const walkItems = ( { items, parents } ) => {
@@ -42,6 +42,7 @@ const buildSidebarMapping = () => {
     walkItems( { items: specItems, parents: [ 'Specification' ] } )
     walkItems( { items: workbenchItems, parents: [ 'Workbench' ] } )
     walkItems( { items: sessionItems && Array.isArray( sessionItems ) ? sessionItems : [], parents: [ 'Session' ] } )
+    walkItems( { items: specMetaItems && Array.isArray( specMetaItems ) ? specMetaItems : [], parents: [ 'Meta-Spec' ] } )
 
     return mapping
 }

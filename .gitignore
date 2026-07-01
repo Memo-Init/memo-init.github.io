@@ -16,10 +16,12 @@ src/content/docs/specification/
 src/content/docs/workbench/
 src/content/docs/sop/
 src/content/docs/session/
+src/content/docs/spec/
 src/data/manifest.json
 src/data/spec-manifest.core.json
 src/data/spec-manifest.workbench.json
 src/data/spec-manifest.session.json
+src/data/spec-manifest.spec.json
 public/llms.txt
 public/docs-llms.txt
 public/llms-full.txt
