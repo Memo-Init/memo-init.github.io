@@ -16,15 +16,17 @@ import path from 'node:path'
 // source; the raw-URL fallback is pinned to the SAME sha (was: main). Bump both via `npm install
 // memo-init-spec@github:Memo-Init/spec#<newSha>` after a verified re-bless (memo maintenance verify).
 const PINNED_SPEC_SHA = 'f65d565a5195f1727b01ba2d795eda280f3946de'
-// Resolution order (works locally and in CI):
+// Resolution order (works locally and in CI). Post-Memo-058 the spec publishes its resolved refs
+// under `dist/` (the former `generated/` tree is gone — WI-026/WI-028), so every path targets
+// `dist/refs.resolved.json`:
 //   1. installed pinned dependency node_modules/memo-init-spec (the commit-hash pin)
 //   2. SPEC_REPO_DIR env (CI checks out the spec repo and points here), else local sibling ../spec
-//   3. if <dir>/generated/refs.resolved.json exists on disk -> read it
+//   3. if <dir>/dist/refs.resolved.json exists on disk -> read it
 //   4. otherwise -> fetch the published raw URL pinned to PINNED_SPEC_SHA
-const PINNED_REFS_PATH = path.resolve( 'node_modules/memo-init-spec/generated/refs.resolved.json' )
+const PINNED_REFS_PATH = path.resolve( 'node_modules/memo-init-spec/dist/refs.resolved.json' )
 const SPEC_REPO_DIR = process.env.SPEC_REPO_DIR || path.resolve( '../spec' )
-const LOCAL_REFS_PATH = path.resolve( SPEC_REPO_DIR, 'generated/refs.resolved.json' )
-const REMOTE_REFS_URL = `https://raw.githubusercontent.com/Memo-Init/spec/${ PINNED_SPEC_SHA }/generated/refs.resolved.json`
+const LOCAL_REFS_PATH = path.resolve( SPEC_REPO_DIR, 'dist/refs.resolved.json' )
+const REMOTE_REFS_URL = `https://raw.githubusercontent.com/Memo-Init/spec/${ PINNED_SPEC_SHA }/dist/refs.resolved.json`
 const OUT_PATH = path.resolve( 'src/data/refs.json' )
 const EXPECTED_SCHEMA = 'refs/1.0.0'
 

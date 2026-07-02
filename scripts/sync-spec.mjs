@@ -1,14 +1,16 @@
 // sync-spec.mjs — pull the spec docs payload into the Starlight content tree.
 //
-// Source (local sibling spec repo):
-//   ../spec/generated/docs-payload/             — core chapters + manifest.json
-//   ../spec/generated/docs-payload/workbench/   — workbench spec chapters
-//   ../spec/generated/docs-payload/session/     — session spec chapters (absorbs the former SOP family, Memo 049)
+// Source (the sibling spec repo's published dist/, post-Memo-058 layout):
+//   ../spec/dist/memo/<version>/spec/         — core chapters + manifest.json
+//   ../spec/dist/workbench/<version>/spec/     — workbench spec chapters
+//   ../spec/dist/session/<version>/spec/       — session spec chapters (absorbs the former SOP family, Memo 049)
+//   ../spec/dist/spec/<version>/spec/          — Meta-Spec chapters (Memo 059)
 //
 // Targets:
 //   src/content/docs/specification/   — core Starlight content collection
 //   src/content/docs/workbench/       — workbench Starlight content collection
 //   src/content/docs/session/         — session Starlight content collection
+//   src/content/docs/spec/            — Meta-Spec Starlight content collection
 //   src/data/manifest.json            — consumed by src/data/sidebar.mjs
 //
 // Normalization: the payload frontmatter carries richer metadata (spec_version,
@@ -17,10 +19,10 @@
 // to a SAFE frontmatter set: { title, description }. The remaining metadata lives in
 // manifest.json (the single source of truth for ordering and grouping).
 //
-// Link rewriting: workbench/session chapters cross-link each other via /specification/<slug>/
-// in the payload, but their Starlight routes live under /workbench/<slug>/ resp.
-// /session/<slug>/. Those links are rewritten to the correct family route. Core links
-// already point at /specification/.
+// Link routing: the spec generator now emits each family's OWN published route directly
+// (memo → /specification/, workbench → /workbench/, session → /session/, spec → /spec/, derived
+// from each family head — Memo 060 WI-023). The site therefore no longer re-routes an
+// intermediate /specification/ token; it copies the payload body verbatim.
 
 import { mkdir, writeFile, readFile, readdir, rm, copyFile } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
@@ -81,7 +83,6 @@ class SpecSync {
             payloadSrc: WORKBENCH_PAYLOAD_SRC,
             contentDir: CONTENT_WORKBENCH_DIR,
             slugRoot: 'workbench',
-            rewriteSlugs: workbenchSlugs,
             statsKey: 'syncedWorkbench',
             stats
         } )
@@ -90,7 +91,6 @@ class SpecSync {
             payloadSrc: SESSION_PAYLOAD_SRC,
             contentDir: CONTENT_SESSION_DIR,
             slugRoot: 'session',
-            rewriteSlugs: sessionSlugs,
             statsKey: 'syncedSession',
             stats
         } )
@@ -101,7 +101,6 @@ class SpecSync {
             payloadSrc: SPEC_META_PAYLOAD_SRC,
             contentDir: CONTENT_SPEC_META_DIR,
             slugRoot: 'spec',
-            rewriteSlugs: specMetaSlugs,
             statsKey: 'syncedSpecMeta',
             stats
         } )
@@ -211,7 +210,7 @@ class SpecSync {
                 throw new Error( `Manifest references missing core file: ${ fileEntry.filename }` )
             }
             const raw = await readFile( srcPath, 'utf-8' )
-            const normalized = SpecSync.#normalize( { raw, fileEntry, rewriteSlugs: null, slugRoot: null } )
+            const normalized = SpecSync.#normalize( { raw, fileEntry } )
             const dst = path.join( CONTENT_SPEC_DIR, `${ fileEntry.slug }.md` )
             await writeFile( dst, normalized, 'utf-8' )
             stats.syncedCore += 1
@@ -220,9 +219,9 @@ class SpecSync {
     }
 
 
-    // Generic sibling-family sync (workbench, sop). No-op when the family block is
+    // Generic sibling-family sync (workbench, session, spec). No-op when the family block is
     // absent/empty (so a not-yet-authored family does not break the sync).
-    static async #syncFamily( { block, payloadSrc, contentDir, slugRoot, rewriteSlugs, statsKey, stats } ) {
+    static async #syncFamily( { block, payloadSrc, contentDir, slugRoot, statsKey, stats } ) {
         if( !block || !Array.isArray( block.files ) || block.files.length === 0 ) {
             return
         }
@@ -235,7 +234,7 @@ class SpecSync {
                 throw new Error( `manifest.${ slugRoot } references missing file: ${ slugRoot }/${ fileEntry.filename }` )
             }
             const raw = await readFile( srcPath, 'utf-8' )
-            const normalized = SpecSync.#normalize( { raw, fileEntry, rewriteSlugs, slugRoot } )
+            const normalized = SpecSync.#normalize( { raw, fileEntry } )
             const dst = path.join( contentDir, `${ fileEntry.slug }.md` )
             await writeFile( dst, normalized, 'utf-8' )
             stats[ statsKey ] += 1
@@ -244,14 +243,14 @@ class SpecSync {
     }
 
 
-    // Reduce frontmatter to the safe Starlight set and (for a sibling family) rewrite
-    // /specification/<slug>/ links to /<slugRoot>/<slug>/ where slug is a known family
-    // chapter. Returns the rewritten file text.
+    // Reduce frontmatter to the safe Starlight set and copy the body verbatim. The spec
+    // generator already publishes each family's own route (Memo 060 WI-023), so the site no
+    // longer re-routes an intermediate /specification/ token here.
     //
     // The payload frontmatter values are already valid YAML (correctly quoted by the
     // generator). Rather than re-parse and re-escape, the original whole lines for the
     // safe keys are kept VERBATIM.
-    static #normalize( { raw, fileEntry, rewriteSlugs, slugRoot } ) {
+    static #normalize( { raw, fileEntry } ) {
         const match = raw.match( /^---\n([\s\S]*?)\n---\n?/ )
         if( !match ) {
             throw new Error( `${ fileEntry.filename }: no frontmatter block found` )
@@ -259,11 +258,7 @@ class SpecSync {
 
         const safeFm = SpecSync.#renderFrontmatter( { block: match[ 1 ], fileEntry } )
 
-        let body = raw.slice( match[ 0 ].length ).replace( /^\n+/, '' )
-
-        if( rewriteSlugs && slugRoot ) {
-            body = SpecSync.#rewriteFamilyLinks( { body, slugs: rewriteSlugs, slugRoot } )
-        }
+        const body = raw.slice( match[ 0 ].length ).replace( /^\n+/, '' )
 
         return `${ safeFm }${ body }`
     }
@@ -284,16 +279,6 @@ class SpecSync {
             return `${ key }: "${ esc }"`
         } )
         return [ '---', ...picked, '---', '' ].join( '\n' ) + '\n'
-    }
-
-
-    static #rewriteFamilyLinks( { body, slugs, slugRoot } ) {
-        return body.replace( /\/specification\/([a-z0-9-]+)\//g, ( whole, slug ) => {
-            if( slugs.has( slug ) ) {
-                return `/${ slugRoot }/${ slug }/`
-            }
-            return whole
-        } )
     }
 
 
