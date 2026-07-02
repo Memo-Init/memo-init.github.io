@@ -4,7 +4,6 @@ description: "A v0.1 milestone — memo-init now scores both the work it is buil
 date: 2026-06-22
 author: "Memo-Init Team"
 tags: [ "release", "goals", "maintenance" ]
-featured: true
 ---
 
 An AI agent that just did a piece of work will almost always tell you it went well. Ask

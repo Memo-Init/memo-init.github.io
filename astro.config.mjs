@@ -49,7 +49,13 @@ export default defineConfig({
                 { tag: 'link', attrs: { rel: 'apple-touch-icon', sizes: '180x180', href: '/apple-touch-icon.png' } },
                 { tag: 'link', attrs: { rel: 'icon', type: 'image/png', sizes: '32x32', href: '/favicon-32.png' } },
                 { tag: 'link', attrs: { rel: 'icon', type: 'image/png', sizes: '192x192', href: '/favicon-192.png' } },
-                { tag: 'link', attrs: { rel: 'icon', type: 'image/png', sizes: '512x512', href: '/favicon-512.png' } }
+                { tag: 'link', attrs: { rel: 'icon', type: 'image/png', sizes: '512x512', href: '/favicon-512.png' } },
+                // Bug 9 fix: twitter:card=summary_large_image is emitted by Starlight,
+                // but no og:image existed -> blank social cards. Provide a default.
+                { tag: 'meta', attrs: { property: 'og:image', content: 'https://memo-init.github.io/og-default.png' } },
+                { tag: 'meta', attrs: { name: 'twitter:image', content: 'https://memo-init.github.io/og-default.png' } },
+                // Bug 10 fix: RSS feed autodiscovery (feed readers / browser extensions).
+                { tag: 'link', attrs: { rel: 'alternate', type: 'application/rss+xml', title: 'memo-init Blog', href: '/blog/rss.xml' } }
             ],
             customCss: [
                 './src/styles/theme.css',

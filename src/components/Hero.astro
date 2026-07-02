@@ -44,6 +44,9 @@ const t = {
 .pencil-hero {
     position: relative;
     isolation: isolate;
+    /* Bug 3 fix: clip the ::before glow (inset: -2rem) so it cannot bleed past
+     * the viewport edge and force a horizontal scrollbar on mobile. */
+    overflow: clip;
     text-align: center;
     max-width: 1000px;
     margin: 1rem auto 1rem;
@@ -145,6 +148,12 @@ const t = {
 .pencil-hero__cta--secondary:hover {
     border-color: var(--accent);
     color: var(--accent) !important;
+}
+
+/* Bug 7 fix: visible focus ring for keyboard users on the hero CTAs. */
+.pencil-hero__cta:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
 }
 
 .pencil-hero__trust {

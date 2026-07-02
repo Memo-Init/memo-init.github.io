@@ -13,6 +13,7 @@
         "sync-spec": "node scripts/sync-spec.mjs",
         "fetch-refs": "node scripts/fetch-refs.mjs",
         "favicons": "node scripts/generate-favicons.mjs",
+        "generate-og": "node scripts/generate-og.mjs",
         "generate-llms-txt": "node scripts/generate-llms-txt.mjs",
         "generate-markdown-map": "node scripts/generate-markdown-map.mjs",
         "generate-robots-txt": "node scripts/generate-robots-txt.mjs",
