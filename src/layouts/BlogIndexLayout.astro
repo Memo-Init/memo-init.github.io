@@ -17,7 +17,9 @@ const base = '/blog'
 // Show drafts in dev mode for local review; hide in production builds.
 const showDrafts = import.meta.env.DEV
 const posts = ( await getCollection( 'blog', ( { data } ) => showDrafts || !data.draft ) )
-    .sort( ( a, b ) => b.data.date.valueOf() - a.data.date.valueOf() )
+    // Bug 8 fix: deterministic tiebreak so equal-date ordering is stable across
+    // builds (three posts share 2026-06-22; order was build-order-dependent).
+    .sort( ( a, b ) => b.data.date.valueOf() - a.data.date.valueOf() || a.id.localeCompare( b.id ) )
 
 // Featured post comes from the shared single-source helper, guarded for the
 // empty collection (scaffold ships before the first post).

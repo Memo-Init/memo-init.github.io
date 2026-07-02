@@ -47,7 +47,7 @@ starlight-theme-select {
     --sl-color-text-accent: var(--accent);
     --sl-color-gray-1: var(--text-primary);
     --sl-color-gray-2: var(--text-inactive);
-    --sl-color-gray-3: var(--group-title);
+    --sl-color-gray-3: var(--text-inactive);  /* Bug 6 fix: was --group-title (~4.0:1, AA fail) */
     --sl-color-gray-4: var(--border);
     --sl-color-gray-5: var(--bg-card);
     --sl-color-gray-6: var(--bg-canvas);
@@ -113,8 +113,19 @@ body:has(.pencil-hero) .content-panel {
     border: none !important;
 }
 
+/* Bug 4 fix: visually-hide the duplicate frontmatter <h1 id="_top"> with the
+ * sr-only clip pattern (not display:none) so Starlight's "Skip to content" link,
+ * which targets #_top, stays a valid focusable target on splash pages. */
 body:has(.pencil-hero) h1#_top {
-    display: none !important;
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
 }
 
 /* Blog index + post supply their own styled title, so Starlight's splash
@@ -124,12 +135,24 @@ body:has(.pencil-hero) h1#_top {
  * (Ported from flowmcp.github.io custom.css, blog scope only.) */
 body:has(.blog-index) h1#_top,
 body:has(.blog-post) h1#_top {
-    display: none !important;
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
 }
 
+/* Collapse the frontmatter-title panel visually WITHOUT display:none, so the
+ * sr-only #_top inside stays in the accessibility tree (Bug 4 skip target). */
 body:has(.blog-index) .content-panel:has(h1#_top),
 body:has(.blog-post) .content-panel:has(h1#_top) {
-    display: none !important;
+    padding-block: 0 !important;
+    min-height: 0 !important;
+    border: none !important;
 }
 
 body:has(.blog-index) .content-panel,
@@ -163,7 +186,9 @@ header.header {
     }
 }
 
-@media (max-width: 768px) {
+/* Bug 2 fix: unify hamburger reposition + header shrink to the 50rem nav-hide
+ * boundary, removing the 769-800px band where the fixed hamburger overlapped the logo. */
+@media (max-width: 50rem) {
     :root {
         --sl-nav-height: 56px;
     }
