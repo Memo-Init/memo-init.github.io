@@ -90,8 +90,31 @@ if( typeof specFromCommit === 'string' && specFromCommit.length > 0 ) {
     siteRefs.generated = { ...siteRefs.generated, fromCommit: specFromCommit }
 }
 
+// B3 (Memo 064, F9=A): thread every spec family's identifier + dependency graph through so the docs
+// can DISPLAY them — the Footer renders the full identifier (`<slug>@<version>:<sha>`) and the
+// homepage renders each family's `requires`/`references` edges. This is pure pass-through of values
+// already resolved by the spec (specId composed by generate-refs, edges the verbatim authored graph
+// mirrored into the aggregate) — nothing is derived here (F14 = B boundary). A family is threaded
+// ONLY when it carries BOTH a specId string and an edges array, so a partial/absent block is
+// suppressed downstream rather than shown as a placeholder (no silent default).
+const SPEC_FAMILIES = [ 'memo', 'workbench', 'session', 'meta-spec' ]
+const specFamilies = SPEC_FAMILIES
+    .map( ( family ) => {
+        const block = specRefs[ family ]
+        if( !block ) { return null }
+        const hasId = typeof block.specId === 'string' && block.specId.length > 0
+        const hasEdges = Array.isArray( block.edges )
+        if( hasId === false || hasEdges === false ) { return null }
+
+        return { family, version: block.currentVersion, specId: block.specId, edges: block.edges }
+    } )
+    .filter( ( entry ) => entry !== null )
+
+siteRefs.specFamilies = specFamilies
+
 fs.writeFileSync( OUT_PATH, `${ JSON.stringify( siteRefs, null, 4 ) }\n`, 'utf-8' )
 
 console.log( `[fetch-refs] OK — spec.currentVersion ${ previousVersion } -> ${ specVersion }` )
 console.log( `[fetch-refs] generated.fromCommit=${ specFromCommit ?? '(absent — not propagated)' }` )
+console.log( `[fetch-refs] specFamilies threaded=${ specFamilies.map( ( f ) => f.specId ).join( ', ' ) || '(none)' }` )
 console.log( `[fetch-refs] source=${ source }` )

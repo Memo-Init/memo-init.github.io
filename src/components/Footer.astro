@@ -8,16 +8,24 @@ const year = new Date().getFullYear();
 
 const copy = `© ${year} memo-init · MIT`;
 
-// MI-T9 (Memo 064, F9 nuance): render the passed-through provenance `refs.generated.fromCommit`.
-// Pure display of an already-present value — NOT content generation (F14 = B). The value is
-// threaded into src/data/refs.json by fetch-refs (MI-T5, Phase 4); until then it is absent, so
-// the provenance line is suppressed entirely rather than showing a placeholder (no silent default).
-const specCommit = typeof refs?.generated?.fromCommit === 'string' && refs.generated.fromCommit.length > 0
+// B3 (Memo 064, F9=A): render the full spec IDENTIFIER of the meta family (`<slug>@<version>:<sha>`)
+// instead of the bare `spec <sha>`. Both are passed-through values (F14 = B, pure display, no
+// derivation): `specId` is composed by the spec's generate-refs and threaded into
+// src/data/refs.json by fetch-refs; the full 40-char source SHA lives in `generated.fromCommit` and
+// backs the title tooltip. The meta family is the site-wide identity anchor (it `provides` the spec
+// form every other family requires). Absent data -> the line is suppressed entirely rather than
+// shown as a placeholder (no silent default), the same pattern the bare provenance line already used.
+const metaFamily = Array.isArray( refs?.specFamilies )
+    ? refs.specFamilies.find( ( entry ) => entry.family === 'meta-spec' )
+    : null;
+const specIdentifier = metaFamily && typeof metaFamily.specId === 'string' && metaFamily.specId.length > 0
+    ? metaFamily.specId
+    : null;
+// Full 40-char source commit backs the tooltip; falls back to the identifier itself when absent.
+const specFullCommit = typeof refs?.generated?.fromCommit === 'string' && refs.generated.fromCommit.length > 0
     ? refs.generated.fromCommit
     : null;
-// Displayed short form is the 7-char prefix (the same shortSha convention as the spec identifier /
-// llms.txt stamp) — a display transform of the passed value, not a new value.
-const specCommitShort = specCommit !== null ? specCommit.slice( 0, 7 ) : null;
+const specTitle = specFullCommit !== null ? `spec source commit ${specFullCommit}` : specIdentifier;
 
 const columns = [
     {
@@ -69,10 +77,10 @@ const columns = [
             <span class="pencil-footer__logo">memo-init</span>
             <span class="pencil-footer__sep">·</span>
             <span class="pencil-footer__copy">{copy}</span>
-            {specCommit && (
+            {specIdentifier && (
                 <>
                     <span class="pencil-footer__sep">·</span>
-                    <span class="pencil-footer__provenance" title={`spec source commit ${specCommit}`}>spec {specCommitShort}</span>
+                    <span class="pencil-footer__provenance" title={specTitle}>{specIdentifier}</span>
                 </>
             )}
         </div>

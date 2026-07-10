@@ -27,6 +27,59 @@
         ]
     },
     "generated": {
-        "fromCommit": "7cb6c78ccbf3de0afbef1b2549afdc1df8d7e61e"
-    }
+        "fromCommit": "41481d118c968d3a745edf93dfaff2c9921f83d3"
+    },
+    "specFamilies": [
+        {
+            "family": "memo",
+            "version": "0.1.0",
+            "specId": "memo@0.1.0:41481d1",
+            "edges": [
+                {
+                    "target": "session",
+                    "kind": "requires",
+                    "pin": "0.1.0"
+                },
+                {
+                    "target": "meta-spec",
+                    "kind": "requires",
+                    "pin": "0.1.0"
+                },
+                {
+                    "target": "workbench",
+                    "kind": "references",
+                    "pin": "0.1.0"
+                }
+            ]
+        },
+        {
+            "family": "workbench",
+            "version": "0.1.0",
+            "specId": "workbench@0.1.0:41481d1",
+            "edges": [
+                {
+                    "target": "session",
+                    "kind": "requires",
+                    "pin": "0.1.0"
+                },
+                {
+                    "target": "meta-spec",
+                    "kind": "requires",
+                    "pin": "0.1.0"
+                }
+            ]
+        },
+        {
+            "family": "session",
+            "version": "0.1.0",
+            "specId": "session@0.1.0:41481d1",
+            "edges": []
+        },
+        {
+            "family": "meta-spec",
+            "version": "0.1.0",
+            "specId": "meta-spec@0.1.0:41481d1",
+            "edges": []
+        }
+    ]
 }

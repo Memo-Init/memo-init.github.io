@@ -1,0 +1,166 @@
+---
+// SpecFamilies — B3 (Memo 064, F9=A): a central docs surface that DISPLAYS the spec identifier
+// (`<slug>@<version>:<sha>`) and the dependency graph (`requires` / `references` edges) for every
+// spec family. Both are threaded through from the spec's resolved refs by fetch-refs into
+// src/data/refs.json (`refs.specFamilies`). This component only RENDERS those passed-through values
+// — it derives no content and hardcodes no versions/edges (F14 = B boundary). If the data is absent
+// (cold checkout before fetch-refs runs) it renders nothing rather than a placeholder (no silent
+// default), the same suppression pattern the Footer provenance line uses.
+import refs from '../data/refs.json';
+
+const families = Array.isArray( refs?.specFamilies ) ? refs.specFamilies : [];
+
+// Human labels for the family keys — a presentation-only lookup, not content (the identity/version
+// still comes entirely from the threaded specId). Unknown keys fall back to the raw key.
+const LABELS = {
+    'memo': 'Memo',
+    'workbench': 'Workbench',
+    'session': 'Session',
+    'meta-spec': 'Meta-Spec'
+};
+
+// Group a family's edges by kind into "requires" / "references" pointer lists, each rendered as
+// `<target>@<pin>` — the compact graph line. Pure transform of the threaded edge array.
+const describeEdges = ( edges ) => {
+    const list = Array.isArray( edges ) ? edges : [];
+    const requires = list
+        .filter( ( edge ) => edge.kind === 'requires' )
+        .map( ( edge ) => `${ edge.target }@${ edge.pin }` );
+    const references = list
+        .filter( ( edge ) => edge.kind === 'references' )
+        .map( ( edge ) => `${ edge.target }@${ edge.pin }` );
+
+    return { requires, references };
+};
+---
+
+{families.length > 0 && (
+    <section class="spec-families" aria-label="Spec families and their dependency graph">
+        <h2 class="spec-families__title">Spec families</h2>
+        <p class="spec-families__lead">
+            Four sibling specification families, each independently versioned. Every card shows the
+            family's full identifier and the dependency edges it declares.
+        </p>
+        <ul class="spec-families__grid">
+            {families.map( ( family ) => {
+                const label = LABELS[ family.family ] ?? family.family;
+                const { requires, references } = describeEdges( family.edges );
+                const hasEdges = requires.length > 0 || references.length > 0;
+
+                return (
+                    <li class="spec-families__card">
+                        <div class="spec-families__head">
+                            <span class="spec-families__name">{label}</span>
+                            <code class="spec-families__id" title={family.specId}>{family.specId}</code>
+                        </div>
+                        {hasEdges ? (
+                            <p class="spec-families__deps">
+                                {requires.length > 0 && (
+                                    <span class="spec-families__dep">
+                                        <span class="spec-families__kind spec-families__kind--requires">requires</span>
+                                        {' '}{requires.join( ', ' )}
+                                    </span>
+                                )}
+                                {requires.length > 0 && references.length > 0 && (
+                                    <span class="spec-families__deps-sep"> · </span>
+                                )}
+                                {references.length > 0 && (
+                                    <span class="spec-families__dep">
+                                        <span class="spec-families__kind spec-families__kind--references">references</span>
+                                        {' '}{references.join( ', ' )}
+                                    </span>
+                                )}
+                            </p>
+                        ) : (
+                            <p class="spec-families__deps spec-families__deps--none">no requires or references — genesis family</p>
+                        )}
+                    </li>
+                );
+            } )}
+        </ul>
+    </section>
+)}
+
+<style>
+.spec-families {
+    max-width: 900px;
+    margin: 3rem auto 1rem;
+    padding: 0 1.5rem;
+    text-align: left;
+}
+.spec-families__title {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 0.5rem;
+}
+.spec-families__lead {
+    font-size: 14px;
+    color: var(--text-inactive);
+    margin: 0 0 1.5rem;
+    line-height: 1.5;
+}
+.spec-families__grid {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+.spec-families__card {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--bg-canvas);
+    padding: 1rem 1.1rem;
+}
+.spec-families__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.6rem;
+}
+.spec-families__name {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+.spec-families__id {
+    font-size: 12px;
+    color: var(--text-inactive);
+    font-variant-numeric: tabular-nums;
+    word-break: break-all;
+}
+.spec-families__deps {
+    font-size: 13px;
+    color: var(--text-secondary, var(--text-primary));
+    margin: 0;
+    line-height: 1.5;
+}
+.spec-families__deps--none {
+    color: var(--text-inactive);
+    font-style: italic;
+}
+.spec-families__kind {
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-size: 11px;
+}
+.spec-families__kind--requires {
+    color: var(--accent);
+}
+.spec-families__kind--references {
+    color: var(--text-inactive);
+}
+.spec-families__deps-sep {
+    color: var(--group-title);
+}
+@media (max-width: 640px) {
+    .spec-families__grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
