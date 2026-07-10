@@ -28,7 +28,9 @@ const REPO_ROOT = path.resolve( __dirname, '..' )
 const SPEC_REPO_DIR = process.env.SPEC_REPO_DIR
     ? path.resolve( process.env.SPEC_REPO_DIR )
     : path.resolve( REPO_ROOT, '..', 'spec' )
-const SPEC_NS_ROOT = path.resolve( SPEC_REPO_DIR, 'spec' )
+// Flat namespace-first (Memo 064 flatten): the spec repo root IS the container; the per-family
+// llms bundle lives at <ns>/<version>/dist/generated/llms.txt directly under it.
+const SPEC_NS_ROOT = path.resolve( SPEC_REPO_DIR )
 
 // Fixed family order — mirrors sync-spec.mjs and the refs.resolved.json key order. The meta family's
 // internal namespace/dir is `meta-spec` (Memo 064 MI-S7); the published /llms.txt URL is unchanged.

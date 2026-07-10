@@ -17,15 +17,16 @@ import path from 'node:path'
 // preference is removed. The live sibling now wins; the pinned copy and the raw URL remain only as
 // last-ditch fallbacks (never reached when the sibling is present, which every real build requires).
 //
-// Post-Memo-064 the spec is namespace-first: the aggregate resolved refs live at the spec/ root
-// (`spec/refs.resolved.json`), not under a top-level `dist/`.
+// Post-Memo-064 flatten the spec repo root IS the container: the aggregate resolved refs live at
+// that root (`refs.resolved.json`), not under a `spec/` container or a top-level `dist/`.
 //   1. SPEC_REPO_DIR env (CI checks out the spec repo and points here), else local sibling ../spec
-//      -> <dir>/spec/refs.resolved.json  (the SAME source sync-spec resolves from)
+//      -> <dir>/refs.resolved.json  (the SAME source sync-spec resolves from)
 //   2. installed pinned dependency node_modules/memo-init-spec (legacy fallback only)
-//   3. otherwise -> fetch the published raw URL pinned to PINNED_SPEC_SHA
+//   3. otherwise -> fetch the published raw URL pinned to PINNED_SPEC_SHA (the path at THAT pinned
+//      commit, which predates the flatten, so it stays under the historical spec/ container)
 const PINNED_SPEC_SHA = 'f65d565a5195f1727b01ba2d795eda280f3946de'
 const SPEC_REPO_DIR = process.env.SPEC_REPO_DIR || path.resolve( '../spec' )
-const LOCAL_REFS_PATH = path.resolve( SPEC_REPO_DIR, 'spec/refs.resolved.json' )
+const LOCAL_REFS_PATH = path.resolve( SPEC_REPO_DIR, 'refs.resolved.json' )
 const PINNED_REFS_PATH = path.resolve( 'node_modules/memo-init-spec/dist/refs.resolved.json' )
 const REMOTE_REFS_URL = `https://raw.githubusercontent.com/Memo-Init/spec/${ PINNED_SPEC_SHA }/spec/refs.resolved.json`
 const OUT_PATH = path.resolve( 'src/data/refs.json' )

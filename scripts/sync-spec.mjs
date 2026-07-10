@@ -1,12 +1,12 @@
 // sync-spec.mjs — pull the spec docs payload into the Starlight content tree.
 //
-// Source (the sibling spec repo, post-Memo-064 namespace-first layout — the payload now
-// lives per family under spec/<ns>/<version>/dist/, and the aggregates at the spec/ root):
-//   ../spec/spec/memo/<version>/dist/spec/       — core chapters
-//   ../spec/spec/workbench/<version>/dist/spec/   — workbench spec chapters
-//   ../spec/spec/session/<version>/dist/spec/     — session spec chapters (absorbs the former SOP family, Memo 049)
-//   ../spec/spec/meta-spec/<version>/dist/spec/   — Meta-Spec chapters (internal ns `meta-spec`, route /spec/, Memo 064 MI-S7)
-//   ../spec/spec/manifest.json                    — the aggregate manifest
+// Source (the sibling spec repo, post-Memo-064 flat namespace-first layout — the payload lives
+// per family under <ns>/<version>/dist/ at the spec repo root, and the aggregates at that root):
+//   ../spec/memo/<version>/dist/spec/       — core chapters
+//   ../spec/workbench/<version>/dist/spec/   — workbench spec chapters
+//   ../spec/session/<version>/dist/spec/     — session spec chapters (absorbs the former SOP family, Memo 049)
+//   ../spec/meta-spec/<version>/dist/spec/   — Meta-Spec chapters (internal ns `meta-spec`, route /spec/, Memo 064 MI-S7)
+//   ../spec/manifest.json                    — the aggregate manifest
 //
 // Targets:
 //   src/content/docs/memo/            — core Starlight content collection (route /memo/, Memo 064 MI-T10)
@@ -39,9 +39,9 @@ const REPO_ROOT = path.resolve( __dirname, '..' )
 const SPEC_REPO_DIR = process.env.SPEC_REPO_DIR
     ? path.resolve( process.env.SPEC_REPO_DIR )
     : path.resolve( REPO_ROOT, '..', 'spec' )
-// Namespace-first root (post-Memo-064): payload per family under spec/<ns>/<version>/dist/,
-// aggregates (manifest.json, refs.resolved.json) at the spec/ root.
-const SPEC_NS_ROOT = path.resolve( SPEC_REPO_DIR, 'spec' )
+// Flat namespace-first root (post-Memo-064 flatten): the spec repo root IS the container — payload
+// per family under <ns>/<version>/dist/, aggregates (manifest.json, refs.resolved.json) at the root.
+const SPEC_NS_ROOT = path.resolve( SPEC_REPO_DIR )
 const MEMO_SPEC_DIR = path.resolve( SPEC_NS_ROOT, 'memo', '0.1.0', 'dist', 'spec' )
 const MEMO_DATA_DIR = path.resolve( SPEC_NS_ROOT, 'memo', '0.1.0', 'dist', 'data' )
 const WORKBENCH_PAYLOAD_SRC = path.resolve( SPEC_NS_ROOT, 'workbench', '0.1.0', 'dist', 'spec' )
@@ -49,8 +49,8 @@ const WORKBENCH_DATA_DIR = path.resolve( SPEC_NS_ROOT, 'workbench', '0.1.0', 'di
 const SESSION_PAYLOAD_SRC = path.resolve( SPEC_NS_ROOT, 'session', '0.1.0', 'dist', 'spec' )
 const SESSION_DATA_DIR = path.resolve( SPEC_NS_ROOT, 'session', '0.1.0', 'dist', 'data' )
 // The meta family's INTERNAL namespace/dir is now `meta-spec` (Memo 064 MI-S7), while its published
-// route stays /spec/ — so the SOURCE dir moves to spec/meta-spec/… but the target content dir and
-// slugRoot below stay `spec` (the /spec/ route is URL-stable).
+// route stays /spec/ — so the SOURCE dir is meta-spec/… but the target content dir and slugRoot
+// below stay `spec` (the /spec/ route is URL-stable).
 const SPEC_META_PAYLOAD_SRC = path.resolve( SPEC_NS_ROOT, 'meta-spec', '0.1.0', 'dist', 'spec' )
 const SPEC_META_DATA_DIR = path.resolve( SPEC_NS_ROOT, 'meta-spec', '0.1.0', 'dist', 'data' )
 const DIST_MANIFEST_JSON = path.resolve( SPEC_NS_ROOT, 'manifest.json' )
