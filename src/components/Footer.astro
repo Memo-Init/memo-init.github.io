@@ -2,9 +2,22 @@
 // Custom footer — ported from FlowMCP Footer.astro (Memo 003, Kap 6).
 // 3-column widget (Project / Resources / Community) + bottom bar.
 // Simplified for memo-init: single locale (EN), no link badges.
+import refs from '../data/refs.json';
+
 const year = new Date().getFullYear();
 
 const copy = `© ${year} memo-init · MIT`;
+
+// MI-T9 (Memo 064, F9 nuance): render the passed-through provenance `refs.generated.fromCommit`.
+// Pure display of an already-present value — NOT content generation (F14 = B). The value is
+// threaded into src/data/refs.json by fetch-refs (MI-T5, Phase 4); until then it is absent, so
+// the provenance line is suppressed entirely rather than showing a placeholder (no silent default).
+const specCommit = typeof refs?.generated?.fromCommit === 'string' && refs.generated.fromCommit.length > 0
+    ? refs.generated.fromCommit
+    : null;
+// Displayed short form is the 7-char prefix (the same shortSha convention as the spec identifier /
+// llms.txt stamp) — a display transform of the passed value, not a new value.
+const specCommitShort = specCommit !== null ? specCommit.slice( 0, 7 ) : null;
 
 const columns = [
     {
@@ -56,6 +69,12 @@ const columns = [
             <span class="pencil-footer__logo">memo-init</span>
             <span class="pencil-footer__sep">·</span>
             <span class="pencil-footer__copy">{copy}</span>
+            {specCommit && (
+                <>
+                    <span class="pencil-footer__sep">·</span>
+                    <span class="pencil-footer__provenance" title={`spec source commit ${specCommit}`}>spec {specCommitShort}</span>
+                </>
+            )}
         </div>
         <a class="pencil-footer__github" href="https://github.com/memo-init" rel="noopener" target="_blank" aria-label="GitHub">
             <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
@@ -152,6 +171,10 @@ const columns = [
 }
 .pencil-footer__copy {
     color: var(--text-inactive);
+}
+.pencil-footer__provenance {
+    color: var(--text-inactive);
+    font-variant-numeric: tabular-nums;
 }
 .pencil-footer__github {
     color: var(--text-inactive);
