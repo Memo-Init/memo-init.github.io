@@ -63,7 +63,7 @@ and it turns our architecture into something a tool can hold accountable.
 
 - **[Open Knowledge Format](https://github.com/GoogleCloudPlatform/knowledge-catalog)** —
   the specification and reference tools, published by Google Cloud under Apache-2.0.
-- **[The specification](/specification/overview/)** — the chapter on our knowledge format
+- **[The Memo specification](/memo/overview/)** — the chapter on our knowledge format
   describes the conformance and the architecture-graph use in full.
 
 memo-init is still at version 0.1 and marked as a draft. We are not claiming a first here —

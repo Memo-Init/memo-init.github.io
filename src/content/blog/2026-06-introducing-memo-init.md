@@ -48,7 +48,7 @@ the parts that fit.
 
 ## Explore it today
 
-- **[The specification](/specification/overview/)** — all chapters, from the input
+- **[The Memo specification](/memo/overview/)** — all chapters, from the input
   pipeline to rollout and quality gates.
 - **[GitHub organization](https://github.com/memo-init)** — the spec and its tooling,
   developed in the open under the MIT license.

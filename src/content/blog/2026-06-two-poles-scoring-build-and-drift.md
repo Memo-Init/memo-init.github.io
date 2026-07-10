@@ -71,7 +71,7 @@ scorecard's say-so.
 
 ## Where to read it
 
-- **[The specification](/specification/overview/)** — the goals and maintenance chapters
+- **[The Memo specification](/memo/overview/)** — the goals and maintenance chapters
   describe the scoring model, the two axes, and the gated re-bless in full.
 - **[GitHub organization](https://github.com/memo-init)** — the spec and its tooling,
   developed in the open under the MIT license.

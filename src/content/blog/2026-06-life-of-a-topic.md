@@ -58,7 +58,7 @@ the history stays honest about what was believed at the time.
 
 ## Where to read it
 
-- **[The specification](/specification/overview/)** — the chapters on the input pipeline,
+- **[The Memo specification](/memo/overview/)** — the chapters on the input pipeline,
   topics, and the chronicle describe each stage and how they connect.
 - **[GitHub organization](https://github.com/memo-init)** — the spec and its tooling, in
   the open under the MIT license.
