@@ -3,7 +3,28 @@ import { defineConfig } from 'astro/config'
 import starlight from '@astrojs/starlight'
 import rehypeMermaid from 'rehype-mermaid'
 import remarkGfm from 'remark-gfm'
+import { readFileSync, existsSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
+import { dirname, resolve } from 'node:path'
 import { SidebarLoader } from './src/data/sidebar.mjs'
+
+const __dirname = dirname( fileURLToPath( import.meta.url ) )
+
+// Memo 064 MI-T10 (F5=A): the core/memo family moved from /specification/ to /memo/. Every prior
+// /specification/<slug>/ URL stays reachable via a per-slug redirect, built from the synced manifest
+// (the same source sidebar.mjs reads — one slug set, no drift). Mirrors the M049 /sop/→/session/
+// precedent. Degrades to none when the manifest is absent (cold checkout before sync-spec runs).
+const buildMemoRedirects = () => {
+    const manifestPath = resolve( __dirname, 'src', 'data', 'manifest.json' )
+    if( existsSync( manifestPath ) === false ) return {}
+    try {
+        const manifest = JSON.parse( readFileSync( manifestPath, 'utf8' ) )
+        const files = Array.isArray( manifest.files ) ? manifest.files : []
+        return Object.fromEntries( files.map( ( file ) => [ `/specification/${ file.slug }/`, `/memo/${ file.slug }/` ] ) )
+    } catch {
+        return {}
+    }
+}
 
 // Mermaid (PRD-008, Memo 004 Kap 5): rehype-mermaid with the `inline-svg`
 // strategy renders diagrams to bare <svg id="mermaid-…"> at build time. It needs
@@ -27,7 +48,9 @@ export default defineConfig({
         '/sop/overview/': '/session/sop/',
         '/sop/common-denominator/': '/session/common-denominator/',
         '/sop/instances/': '/session/instances/',
-        '/sop/conventions/': '/session/conventions/'
+        '/sop/conventions/': '/session/conventions/',
+        // Memo 064 MI-T10: /specification/<slug>/ → /memo/<slug>/ (URL stability for the moved core family).
+        ...buildMemoRedirects()
     },
     markdown: {
         remarkPlugins: [
@@ -75,7 +98,7 @@ export default defineConfig({
             sidebar: [
                 { label: 'About', slug: 'about' },
                 {
-                    label: 'Specification',
+                    label: 'Memo',
                     collapsed: true,
                     badge: specBadge,
                     items: sidebarData.specItems

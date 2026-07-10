@@ -58,9 +58,11 @@ if( specRefs.validation?.passed !== true ) {
     process.exit( 1 )
 }
 
-const specVersion = specRefs.spec?.currentVersion
+// Memo 064 MI-S7: the meta family's refs key is now `meta-spec` (was `spec`). The site's shared
+// spec version is read from that block (same 0.1.0 value); the site-owned `spec` field below is kept.
+const specVersion = specRefs[ 'meta-spec' ]?.currentVersion
 if( typeof specVersion !== 'string' ) {
-    console.error( '[fetch-refs] spec.currentVersion missing in spec refs.resolved.json' )
+    console.error( '[fetch-refs] meta-spec.currentVersion missing in spec refs.resolved.json' )
     process.exit( 1 )
 }
 

@@ -6,9 +6,9 @@
 // added — this is pure pass-through of spec artifacts, not generation.
 //
 // Post-Memo-064 the spec is namespace-first and emits one spec-only llms.txt PER FAMILY:
-//   <SPEC_REPO_DIR>/spec/<ns>/0.1.0/dist/generated/llms.txt   (ns = memo | workbench | session | spec)
+//   <SPEC_REPO_DIR>/spec/<ns>/0.1.0/dist/generated/llms.txt   (ns = memo | workbench | session | meta-spec)
 // The single published bundle /llms.txt is the byte concatenation of the four family
-// bundles in this fixed order (memo, workbench, session, spec) — the "full content"
+// bundles in this fixed order (memo, workbench, session, meta-spec) — the "full content"
 // pass-through. Verifiable: `cat` of the four sources equals public/llms.txt byte for byte.
 //
 // Precondition (PRD-007 / MI-S1): the spec side must have emitted these files before the
@@ -30,8 +30,9 @@ const SPEC_REPO_DIR = process.env.SPEC_REPO_DIR
     : path.resolve( REPO_ROOT, '..', 'spec' )
 const SPEC_NS_ROOT = path.resolve( SPEC_REPO_DIR, 'spec' )
 
-// Fixed family order — mirrors sync-spec.mjs and the refs.resolved.json key order.
-const FAMILIES = [ 'memo', 'workbench', 'session', 'spec' ]
+// Fixed family order — mirrors sync-spec.mjs and the refs.resolved.json key order. The meta family's
+// internal namespace/dir is `meta-spec` (Memo 064 MI-S7); the published /llms.txt URL is unchanged.
+const FAMILIES = [ 'memo', 'workbench', 'session', 'meta-spec' ]
 const SPEC_VERSION = '0.1.0'
 
 const PUBLIC_DIR = path.resolve( REPO_ROOT, 'public' )

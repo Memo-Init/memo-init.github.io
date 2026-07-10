@@ -117,7 +117,7 @@ class SidebarLoader {
             }
             buckets[ key ].push( {
                 label: file.title,
-                slug: `specification/${ file.slug }`
+                slug: `memo/${ file.slug }`
             } )
         } )
 

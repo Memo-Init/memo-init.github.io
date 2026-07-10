@@ -8,9 +8,9 @@
     "docs": {
         "canonical": "https://memo-init.github.io",
         "entryPoints": {
-            "overview": "/specification/overview/",
-            "philosophy": "/specification/philosophy/",
-            "memoSop": "/specification/memo-sop-entrypoint/",
+            "overview": "/memo/overview/",
+            "philosophy": "/memo/philosophy/",
+            "memoSop": "/memo/memo-sop-entrypoint/",
             "workbench": "/workbench/overview/"
         }
     },
@@ -27,6 +27,6 @@
         ]
     },
     "generated": {
-        "fromCommit": "3c2578ac439400dcccd5e7783f9bd26a9f938ea5"
+        "fromCommit": "32833d7ff6d75cf5d0e09b8e15c30da58fd7e00f"
     }
 }

@@ -5,11 +5,11 @@
 //   ../spec/spec/memo/<version>/dist/spec/       — core chapters
 //   ../spec/spec/workbench/<version>/dist/spec/   — workbench spec chapters
 //   ../spec/spec/session/<version>/dist/spec/     — session spec chapters (absorbs the former SOP family, Memo 049)
-//   ../spec/spec/spec/<version>/dist/spec/        — Meta-Spec chapters (Memo 059)
+//   ../spec/spec/meta-spec/<version>/dist/spec/   — Meta-Spec chapters (internal ns `meta-spec`, route /spec/, Memo 064 MI-S7)
 //   ../spec/spec/manifest.json                    — the aggregate manifest
 //
 // Targets:
-//   src/content/docs/specification/   — core Starlight content collection
+//   src/content/docs/memo/            — core Starlight content collection (route /memo/, Memo 064 MI-T10)
 //   src/content/docs/workbench/       — workbench Starlight content collection
 //   src/content/docs/session/         — session Starlight content collection
 //   src/content/docs/spec/            — Meta-Spec Starlight content collection
@@ -48,11 +48,16 @@ const WORKBENCH_PAYLOAD_SRC = path.resolve( SPEC_NS_ROOT, 'workbench', '0.1.0', 
 const WORKBENCH_DATA_DIR = path.resolve( SPEC_NS_ROOT, 'workbench', '0.1.0', 'dist', 'data' )
 const SESSION_PAYLOAD_SRC = path.resolve( SPEC_NS_ROOT, 'session', '0.1.0', 'dist', 'spec' )
 const SESSION_DATA_DIR = path.resolve( SPEC_NS_ROOT, 'session', '0.1.0', 'dist', 'data' )
-const SPEC_META_PAYLOAD_SRC = path.resolve( SPEC_NS_ROOT, 'spec', '0.1.0', 'dist', 'spec' )
-const SPEC_META_DATA_DIR = path.resolve( SPEC_NS_ROOT, 'spec', '0.1.0', 'dist', 'data' )
+// The meta family's INTERNAL namespace/dir is now `meta-spec` (Memo 064 MI-S7), while its published
+// route stays /spec/ — so the SOURCE dir moves to spec/meta-spec/… but the target content dir and
+// slugRoot below stay `spec` (the /spec/ route is URL-stable).
+const SPEC_META_PAYLOAD_SRC = path.resolve( SPEC_NS_ROOT, 'meta-spec', '0.1.0', 'dist', 'spec' )
+const SPEC_META_DATA_DIR = path.resolve( SPEC_NS_ROOT, 'meta-spec', '0.1.0', 'dist', 'data' )
 const DIST_MANIFEST_JSON = path.resolve( SPEC_NS_ROOT, 'manifest.json' )
 
-const CONTENT_SPEC_DIR = path.resolve( REPO_ROOT, 'src', 'content', 'docs', 'specification' )
+// Memo 064 MI-T10 (F5=A): the core/memo family is served under /memo/ (was /specification/); the
+// sidebar label becomes "Memo" and old /specification/… URLs redirect (astro.config redirects).
+const CONTENT_SPEC_DIR = path.resolve( REPO_ROOT, 'src', 'content', 'docs', 'memo' )
 const CONTENT_WORKBENCH_DIR = path.resolve( REPO_ROOT, 'src', 'content', 'docs', 'workbench' )
 const CONTENT_SESSION_DIR = path.resolve( REPO_ROOT, 'src', 'content', 'docs', 'session' )
 const CONTENT_SPEC_META_DIR = path.resolve( REPO_ROOT, 'src', 'content', 'docs', 'spec' )
