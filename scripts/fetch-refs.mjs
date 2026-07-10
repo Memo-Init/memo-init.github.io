@@ -76,7 +76,19 @@ const previousVersion = siteRefs.spec?.currentVersion
 // site-owned field intact (spec.specRepo, docs.entryPoints, llmsFiles.docsUrl, robotsTxt).
 siteRefs.spec = { ...siteRefs.spec, currentVersion: specVersion }
 
+// MI-T5 (Memo 064, Kap 17 — Provenance-Threading): additively thread the spec's build
+// provenance through so the Footer can show where the spec content came from. Only
+// generated.fromCommit is propagated — this is the same targeted merge (never a wholesale
+// overwrite), so site-owned fields stay untouched. The value is byte-copied from the spec's
+// refs.resolved.json; if the spec carries no fromCommit it is not invented (no silent default,
+// and the Footer already suppresses the line when the field is absent).
+const specFromCommit = specRefs.generated?.fromCommit
+if( typeof specFromCommit === 'string' && specFromCommit.length > 0 ) {
+    siteRefs.generated = { ...siteRefs.generated, fromCommit: specFromCommit }
+}
+
 fs.writeFileSync( OUT_PATH, `${ JSON.stringify( siteRefs, null, 4 ) }\n`, 'utf-8' )
 
 console.log( `[fetch-refs] OK — spec.currentVersion ${ previousVersion } -> ${ specVersion }` )
+console.log( `[fetch-refs] generated.fromCommit=${ specFromCommit ?? '(absent — not propagated)' }` )
 console.log( `[fetch-refs] source=${ source }` )
