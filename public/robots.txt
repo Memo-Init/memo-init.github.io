@@ -5,6 +5,4 @@ Allow: /
 Sitemap: https://memo-init.github.io/sitemap-index.xml
 
 # llms.txt — machine-readable context
-# Index: https://memo-init.github.io/llms.txt
-# Docs: https://memo-init.github.io/docs-llms.txt
-# Full content: https://memo-init.github.io/llms-full.txt
+# Full content: https://memo-init.github.io/llms.txt

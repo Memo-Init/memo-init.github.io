@@ -1,10 +1,12 @@
 // sync-spec.mjs — pull the spec docs payload into the Starlight content tree.
 //
-// Source (the sibling spec repo's published dist/, post-Memo-058 layout):
-//   ../spec/dist/memo/<version>/spec/         — core chapters + manifest.json
-//   ../spec/dist/workbench/<version>/spec/     — workbench spec chapters
-//   ../spec/dist/session/<version>/spec/       — session spec chapters (absorbs the former SOP family, Memo 049)
-//   ../spec/dist/spec/<version>/spec/          — Meta-Spec chapters (Memo 059)
+// Source (the sibling spec repo, post-Memo-064 namespace-first layout — the payload now
+// lives per family under spec/<ns>/<version>/dist/, and the aggregates at the spec/ root):
+//   ../spec/spec/memo/<version>/dist/spec/       — core chapters
+//   ../spec/spec/workbench/<version>/dist/spec/   — workbench spec chapters
+//   ../spec/spec/session/<version>/dist/spec/     — session spec chapters (absorbs the former SOP family, Memo 049)
+//   ../spec/spec/spec/<version>/dist/spec/        — Meta-Spec chapters (Memo 059)
+//   ../spec/spec/manifest.json                    — the aggregate manifest
 //
 // Targets:
 //   src/content/docs/specification/   — core Starlight content collection
@@ -37,16 +39,18 @@ const REPO_ROOT = path.resolve( __dirname, '..' )
 const SPEC_REPO_DIR = process.env.SPEC_REPO_DIR
     ? path.resolve( process.env.SPEC_REPO_DIR )
     : path.resolve( REPO_ROOT, '..', 'spec' )
-const SPEC_DIST_DIR = path.resolve( SPEC_REPO_DIR, 'dist' )
-const MEMO_SPEC_DIR = path.resolve( SPEC_DIST_DIR, 'memo', '0.1.0', 'spec' )
-const MEMO_DATA_DIR = path.resolve( SPEC_DIST_DIR, 'memo', '0.1.0', 'data' )
-const WORKBENCH_PAYLOAD_SRC = path.resolve( SPEC_DIST_DIR, 'workbench', '0.1.0', 'spec' )
-const WORKBENCH_DATA_DIR = path.resolve( SPEC_DIST_DIR, 'workbench', '0.1.0', 'data' )
-const SESSION_PAYLOAD_SRC = path.resolve( SPEC_DIST_DIR, 'session', '0.1.0', 'spec' )
-const SESSION_DATA_DIR = path.resolve( SPEC_DIST_DIR, 'session', '0.1.0', 'data' )
-const SPEC_META_PAYLOAD_SRC = path.resolve( SPEC_DIST_DIR, 'spec', '0.1.0', 'spec' )
-const SPEC_META_DATA_DIR = path.resolve( SPEC_DIST_DIR, 'spec', '0.1.0', 'data' )
-const DIST_MANIFEST_JSON = path.resolve( SPEC_DIST_DIR, 'manifest.json' )
+// Namespace-first root (post-Memo-064): payload per family under spec/<ns>/<version>/dist/,
+// aggregates (manifest.json, refs.resolved.json) at the spec/ root.
+const SPEC_NS_ROOT = path.resolve( SPEC_REPO_DIR, 'spec' )
+const MEMO_SPEC_DIR = path.resolve( SPEC_NS_ROOT, 'memo', '0.1.0', 'dist', 'spec' )
+const MEMO_DATA_DIR = path.resolve( SPEC_NS_ROOT, 'memo', '0.1.0', 'dist', 'data' )
+const WORKBENCH_PAYLOAD_SRC = path.resolve( SPEC_NS_ROOT, 'workbench', '0.1.0', 'dist', 'spec' )
+const WORKBENCH_DATA_DIR = path.resolve( SPEC_NS_ROOT, 'workbench', '0.1.0', 'dist', 'data' )
+const SESSION_PAYLOAD_SRC = path.resolve( SPEC_NS_ROOT, 'session', '0.1.0', 'dist', 'spec' )
+const SESSION_DATA_DIR = path.resolve( SPEC_NS_ROOT, 'session', '0.1.0', 'dist', 'data' )
+const SPEC_META_PAYLOAD_SRC = path.resolve( SPEC_NS_ROOT, 'spec', '0.1.0', 'dist', 'spec' )
+const SPEC_META_DATA_DIR = path.resolve( SPEC_NS_ROOT, 'spec', '0.1.0', 'dist', 'data' )
+const DIST_MANIFEST_JSON = path.resolve( SPEC_NS_ROOT, 'manifest.json' )
 
 const CONTENT_SPEC_DIR = path.resolve( REPO_ROOT, 'src', 'content', 'docs', 'specification' )
 const CONTENT_WORKBENCH_DIR = path.resolve( REPO_ROOT, 'src', 'content', 'docs', 'workbench' )

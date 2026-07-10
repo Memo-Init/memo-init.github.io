@@ -3,7 +3,7 @@
     "spec": {
         "currentVersion": "0.1.0",
         "specRepo": "https://github.com/memo-init/spec",
-        "llmsTxtUrl": "https://memo-init.github.io/llms-full.txt"
+        "llmsTxtUrl": "https://memo-init.github.io/llms.txt"
     },
     "docs": {
         "canonical": "https://memo-init.github.io",
@@ -19,15 +19,11 @@
         "specRepo": "https://github.com/memo-init/spec"
     },
     "llmsFiles": {
-        "indexUrl": "https://memo-init.github.io/llms.txt",
-        "docsUrl": "https://memo-init.github.io/docs-llms.txt",
-        "fullUrl": "https://memo-init.github.io/llms-full.txt"
+        "indexUrl": "https://memo-init.github.io/llms.txt"
     },
     "robotsTxt": {
         "publishedLlmsFiles": [
-            "/llms.txt",
-            "/docs-llms.txt",
-            "/llms-full.txt"
+            "/llms.txt"
         ]
     }
 }

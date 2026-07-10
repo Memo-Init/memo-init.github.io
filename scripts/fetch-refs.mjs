@@ -10,32 +10,33 @@ import path from 'node:path'
 // spec.specRepo, robotsTxt) are NOT in the spec schema and are preserved untouched —
 // this is a targeted merge, never a wholesale overwrite of the richer site schema.
 //
-// Commit-hash pin (Memo 030, Kap 2): the spec is consumed at a PINNED commit via the
-// `memo-init-spec` github dependency, NOT the wandering main branch — this is the drift sensor's
-// anchor (pinned SHA vs spec HEAD). The pinned, installed dependency is the deterministic first
-// source; the raw-URL fallback is pinned to the SAME sha (was: main). Bump both via `npm install
-// memo-init-spec@github:Memo-Init/spec#<newSha>` after a verified re-bless (memo maintenance verify).
+// Single-source resolution (Memo 064, C2 / MI-T6 — dual-source-bug fix): the site's content
+// (sync-spec) reads the LIVE sibling spec repo, so refs MUST come from the same place, or version
+// and SHA drift against the copied content. The former order preferred a PINNED node_modules copy
+// (memo-init-spec github dependency) that lagged the sibling by ~170 commits — that stale-first
+// preference is removed. The live sibling now wins; the pinned copy and the raw URL remain only as
+// last-ditch fallbacks (never reached when the sibling is present, which every real build requires).
+//
+// Post-Memo-064 the spec is namespace-first: the aggregate resolved refs live at the spec/ root
+// (`spec/refs.resolved.json`), not under a top-level `dist/`.
+//   1. SPEC_REPO_DIR env (CI checks out the spec repo and points here), else local sibling ../spec
+//      -> <dir>/spec/refs.resolved.json  (the SAME source sync-spec resolves from)
+//   2. installed pinned dependency node_modules/memo-init-spec (legacy fallback only)
+//   3. otherwise -> fetch the published raw URL pinned to PINNED_SPEC_SHA
 const PINNED_SPEC_SHA = 'f65d565a5195f1727b01ba2d795eda280f3946de'
-// Resolution order (works locally and in CI). Post-Memo-058 the spec publishes its resolved refs
-// under `dist/` (the former `generated/` tree is gone — WI-026/WI-028), so every path targets
-// `dist/refs.resolved.json`:
-//   1. installed pinned dependency node_modules/memo-init-spec (the commit-hash pin)
-//   2. SPEC_REPO_DIR env (CI checks out the spec repo and points here), else local sibling ../spec
-//   3. if <dir>/dist/refs.resolved.json exists on disk -> read it
-//   4. otherwise -> fetch the published raw URL pinned to PINNED_SPEC_SHA
-const PINNED_REFS_PATH = path.resolve( 'node_modules/memo-init-spec/dist/refs.resolved.json' )
 const SPEC_REPO_DIR = process.env.SPEC_REPO_DIR || path.resolve( '../spec' )
-const LOCAL_REFS_PATH = path.resolve( SPEC_REPO_DIR, 'dist/refs.resolved.json' )
-const REMOTE_REFS_URL = `https://raw.githubusercontent.com/Memo-Init/spec/${ PINNED_SPEC_SHA }/dist/refs.resolved.json`
+const LOCAL_REFS_PATH = path.resolve( SPEC_REPO_DIR, 'spec/refs.resolved.json' )
+const PINNED_REFS_PATH = path.resolve( 'node_modules/memo-init-spec/dist/refs.resolved.json' )
+const REMOTE_REFS_URL = `https://raw.githubusercontent.com/Memo-Init/spec/${ PINNED_SPEC_SHA }/spec/refs.resolved.json`
 const OUT_PATH = path.resolve( 'src/data/refs.json' )
 const EXPECTED_SCHEMA = 'refs/1.0.0'
 
 const loadSpecRefs = async () => {
-    if( fs.existsSync( PINNED_REFS_PATH ) ) {
-        return { refs: JSON.parse( fs.readFileSync( PINNED_REFS_PATH, 'utf-8' ) ), source: PINNED_REFS_PATH }
-    }
     if( fs.existsSync( LOCAL_REFS_PATH ) ) {
         return { refs: JSON.parse( fs.readFileSync( LOCAL_REFS_PATH, 'utf-8' ) ), source: LOCAL_REFS_PATH }
+    }
+    if( fs.existsSync( PINNED_REFS_PATH ) ) {
+        return { refs: JSON.parse( fs.readFileSync( PINNED_REFS_PATH, 'utf-8' ) ), source: PINNED_REFS_PATH }
     }
     const response = await fetch( REMOTE_REFS_URL )
     if( !response.ok ) {

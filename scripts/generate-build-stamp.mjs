@@ -12,7 +12,7 @@ import { readFile, writeFile } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
 import path from 'node:path'
 
-import { resolveSpecHeadSha } from './spec-head.mjs'
+import { resolveSpecFromCommit } from './spec-head.mjs'
 
 
 const OUT_PATH = path.resolve( 'public/build-stamp.json' )
@@ -29,7 +29,7 @@ const readSpecVersion = async () => {
 
 
 const main = async () => {
-    const head = await resolveSpecHeadSha()
+    const head = await resolveSpecFromCommit()
     const specVersion = await readSpecVersion()
 
     const stamp = {

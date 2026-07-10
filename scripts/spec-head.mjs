@@ -48,4 +48,25 @@ const resolveSpecHeadSha = async () => {
 }
 
 
-export { resolveSpecHeadSha, specRepoDir }
+// Memo 064 (C2 / MI-T7): the ONE provenance SHA end-to-end. The spec side stamps the commit
+// it built its dist from into `spec/refs.resolved.json` as `generated.fromCommit`. The site
+// carries THAT exact token (not the spec repo's `.git/HEAD`, which can be ahead of the emitted
+// dist), so the build-stamp SHA is identical to the SHA the copied llms bundle was generated at.
+// Returns the same { ok, sha, reason } shape as resolveSpecHeadSha for a drop-in swap.
+const resolveSpecFromCommit = async () => {
+    const refsPath = path.resolve( specRepoDir(), 'spec', 'refs.resolved.json' )
+    if( existsSync( refsPath ) !== true ) {
+        return { ok: false, sha: null, reason: `no refs.resolved.json at ${ refsPath }` }
+    }
+
+    const parsed = JSON.parse( await readFile( refsPath, 'utf-8' ) )
+    const fromCommit = parsed.generated?.fromCommit
+    if( typeof fromCommit !== 'string' || fromCommit.length === 0 ) {
+        return { ok: false, sha: null, reason: `generated.fromCommit missing in ${ refsPath }` }
+    }
+
+    return { ok: true, sha: fromCommit, reason: 'dist generated.fromCommit' }
+}
+
+
+export { resolveSpecHeadSha, resolveSpecFromCommit, specRepoDir }

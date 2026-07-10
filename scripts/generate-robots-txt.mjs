@@ -6,11 +6,10 @@ import { mkdir, writeFile } from 'node:fs/promises'
 
 const OUTPUT = 'public/robots.txt'
 const SITE_BASE = 'https://memo-init.github.io'
-// PRD-010: the site now publishes the 3-layer llms model (index + docs + full).
+// Memo 064 (C2 / MI-T4): the site publishes a single pass-through llms bundle (the retired
+// 3-layer model is gone). Only /llms.txt remains.
 const LLMS_FILES = [
-    { path: '/llms.txt', label: 'Index:' },
-    { path: '/docs-llms.txt', label: 'Docs:' },
-    { path: '/llms-full.txt', label: 'Full content:' }
+    { path: '/llms.txt', label: 'Full content:' }
 ]
 
 const buildRobotsTxt = () => {
