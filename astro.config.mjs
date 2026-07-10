@@ -26,6 +26,22 @@ const buildMemoRedirects = () => {
     }
 }
 
+// Memo 064 F5a: the Meta-Spec family moved from /spec/ to /meta-spec/ (the standalone name
+// "Specification" is retired). Every prior /spec/<slug>/ URL — including the internal cross-references
+// still emitted in the spec payload body — stays reachable via a per-slug redirect, built from the
+// synced manifest's `spec` block (same source sidebar.mjs reads). Mirrors buildMemoRedirects.
+const buildMetaSpecRedirects = () => {
+    const manifestPath = resolve( __dirname, 'src', 'data', 'manifest.json' )
+    if( existsSync( manifestPath ) === false ) return {}
+    try {
+        const manifest = JSON.parse( readFileSync( manifestPath, 'utf8' ) )
+        const files = Array.isArray( manifest.spec?.files ) ? manifest.spec.files : []
+        return Object.fromEntries( files.map( ( file ) => [ `/spec/${ file.slug }/`, `/meta-spec/${ file.slug }/` ] ) )
+    } catch {
+        return {}
+    }
+}
+
 // Mermaid (PRD-008, Memo 004 Kap 5): rehype-mermaid with the `inline-svg`
 // strategy renders diagrams to bare <svg id="mermaid-…"> at build time. It needs
 // a headless Chromium — the GitHub Pages deploy workflow installs Playwright
@@ -50,7 +66,9 @@ export default defineConfig({
         '/sop/instances/': '/session/instances/',
         '/sop/conventions/': '/session/conventions/',
         // Memo 064 MI-T10: /specification/<slug>/ → /memo/<slug>/ (URL stability for the moved core family).
-        ...buildMemoRedirects()
+        ...buildMemoRedirects(),
+        // Memo 064 F5a: /spec/<slug>/ → /meta-spec/<slug>/ (URL stability for the renamed Meta-Spec family).
+        ...buildMetaSpecRedirects()
     },
     markdown: {
         remarkPlugins: [

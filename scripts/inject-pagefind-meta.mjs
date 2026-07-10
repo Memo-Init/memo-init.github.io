@@ -39,7 +39,7 @@ const buildSidebarMapping = () => {
         } )
     }
 
-    walkItems( { items: specItems, parents: [ 'Specification' ] } )
+    walkItems( { items: specItems, parents: [ 'Memo' ] } )
     walkItems( { items: workbenchItems, parents: [ 'Workbench' ] } )
     walkItems( { items: sessionItems && Array.isArray( sessionItems ) ? sessionItems : [], parents: [ 'Session' ] } )
     walkItems( { items: specMetaItems && Array.isArray( specMetaItems ) ? specMetaItems : [], parents: [ 'Meta-Spec' ] } )

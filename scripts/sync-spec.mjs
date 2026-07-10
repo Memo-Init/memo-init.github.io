@@ -5,14 +5,14 @@
 //   ../spec/memo/<version>/dist/spec/       — core chapters
 //   ../spec/workbench/<version>/dist/spec/   — workbench spec chapters
 //   ../spec/session/<version>/dist/spec/     — session spec chapters (absorbs the former SOP family, Memo 049)
-//   ../spec/meta-spec/<version>/dist/spec/   — Meta-Spec chapters (internal ns `meta-spec`, route /spec/, Memo 064 MI-S7)
+//   ../spec/meta-spec/<version>/dist/spec/   — Meta-Spec chapters (internal ns `meta-spec`, route /meta-spec/, Memo 064 MI-S7)
 //   ../spec/manifest.json                    — the aggregate manifest
 //
 // Targets:
 //   src/content/docs/memo/            — core Starlight content collection (route /memo/, Memo 064 MI-T10)
 //   src/content/docs/workbench/       — workbench Starlight content collection
 //   src/content/docs/session/         — session Starlight content collection
-//   src/content/docs/spec/            — Meta-Spec Starlight content collection
+//   src/content/docs/meta-spec/       — Meta-Spec Starlight content collection (route /meta-spec/)
 //   src/data/manifest.json            — consumed by src/data/sidebar.mjs
 //
 // Normalization: the payload frontmatter carries richer metadata (spec_version,
@@ -48,9 +48,10 @@ const WORKBENCH_PAYLOAD_SRC = path.resolve( SPEC_NS_ROOT, 'workbench', '0.1.0', 
 const WORKBENCH_DATA_DIR = path.resolve( SPEC_NS_ROOT, 'workbench', '0.1.0', 'dist', 'data' )
 const SESSION_PAYLOAD_SRC = path.resolve( SPEC_NS_ROOT, 'session', '0.1.0', 'dist', 'spec' )
 const SESSION_DATA_DIR = path.resolve( SPEC_NS_ROOT, 'session', '0.1.0', 'dist', 'data' )
-// The meta family's INTERNAL namespace/dir is now `meta-spec` (Memo 064 MI-S7), while its published
-// route stays /spec/ — so the SOURCE dir is meta-spec/… but the target content dir and slugRoot
-// below stay `spec` (the /spec/ route is URL-stable).
+// The meta family's INTERNAL namespace/dir is `meta-spec` (Memo 064 MI-S7), and its published route
+// is now /meta-spec/ too (Memo 064 F5a: the standalone name "Specification" is retired; the family is
+// "Meta-Spec"). SOURCE dir, target content dir and slugRoot all align on `meta-spec`; the former
+// /spec/… URLs keep resolving via per-slug redirects (astro.config buildMetaSpecRedirects).
 const SPEC_META_PAYLOAD_SRC = path.resolve( SPEC_NS_ROOT, 'meta-spec', '0.1.0', 'dist', 'spec' )
 const SPEC_META_DATA_DIR = path.resolve( SPEC_NS_ROOT, 'meta-spec', '0.1.0', 'dist', 'data' )
 const DIST_MANIFEST_JSON = path.resolve( SPEC_NS_ROOT, 'manifest.json' )
@@ -60,7 +61,7 @@ const DIST_MANIFEST_JSON = path.resolve( SPEC_NS_ROOT, 'manifest.json' )
 const CONTENT_SPEC_DIR = path.resolve( REPO_ROOT, 'src', 'content', 'docs', 'memo' )
 const CONTENT_WORKBENCH_DIR = path.resolve( REPO_ROOT, 'src', 'content', 'docs', 'workbench' )
 const CONTENT_SESSION_DIR = path.resolve( REPO_ROOT, 'src', 'content', 'docs', 'session' )
-const CONTENT_SPEC_META_DIR = path.resolve( REPO_ROOT, 'src', 'content', 'docs', 'spec' )
+const CONTENT_SPEC_META_DIR = path.resolve( REPO_ROOT, 'src', 'content', 'docs', 'meta-spec' )
 
 const DATA_DIR = path.resolve( REPO_ROOT, 'src', 'data' )
 const DATA_MANIFEST = path.join( DATA_DIR, 'manifest.json' )
@@ -103,13 +104,14 @@ class SpecSync {
             statsKey: 'syncedSession',
             stats
         } )
-        // Fourth family: the Meta-Specification (spec). Routed under /spec/, mirroring the
-        // sibling-family sync (no-op when the block is absent/empty).
+        // Fourth family: the Meta-Spec. Its manifest/data block key stays `spec` (unchanged spec-repo
+        // payload), but it is routed under /meta-spec/ (Memo 064 F5a), mirroring the sibling-family
+        // sync (no-op when the block is absent/empty).
         await SpecSync.#syncFamily( {
             block: manifest.spec,
             payloadSrc: SPEC_META_PAYLOAD_SRC,
             contentDir: CONTENT_SPEC_META_DIR,
-            slugRoot: 'spec',
+            slugRoot: 'meta-spec',
             statsKey: 'syncedSpecMeta',
             stats
         } )

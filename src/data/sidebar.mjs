@@ -82,7 +82,8 @@ class SidebarLoader {
         } )
         const specMetaItems = SidebarLoader.#buildFamilyItems( {
             files: manifest.spec?.files,
-            slugRoot: 'spec',
+            // Manifest/data block key stays `spec`; the published route is /meta-spec/ (Memo 064 F5a).
+            slugRoot: 'meta-spec',
             groupOrder: specMetaMeta.order,
             groupLabels: specMetaMeta.labels
         } )
