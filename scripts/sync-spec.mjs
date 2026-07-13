@@ -27,7 +27,7 @@
 // intermediate /specification/ token; it copies the payload body verbatim.
 
 import { mkdir, writeFile, readFile, readdir, rm, copyFile } from 'node:fs/promises'
-import { existsSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 
@@ -42,18 +42,26 @@ const SPEC_REPO_DIR = process.env.SPEC_REPO_DIR
 // Flat namespace-first root (post-Memo-064 flatten): the spec repo root IS the container — payload
 // per family under <ns>/<version>/dist/, aggregates (manifest.json, refs.resolved.json) at the root.
 const SPEC_NS_ROOT = path.resolve( SPEC_REPO_DIR )
-const MEMO_SPEC_DIR = path.resolve( SPEC_NS_ROOT, 'memo', '0.1.0', 'dist', 'spec' )
-const MEMO_DATA_DIR = path.resolve( SPEC_NS_ROOT, 'memo', '0.1.0', 'dist', 'data' )
-const WORKBENCH_PAYLOAD_SRC = path.resolve( SPEC_NS_ROOT, 'workbench', '0.1.0', 'dist', 'spec' )
-const WORKBENCH_DATA_DIR = path.resolve( SPEC_NS_ROOT, 'workbench', '0.1.0', 'dist', 'data' )
-const SESSION_PAYLOAD_SRC = path.resolve( SPEC_NS_ROOT, 'session', '0.1.0', 'dist', 'spec' )
-const SESSION_DATA_DIR = path.resolve( SPEC_NS_ROOT, 'session', '0.1.0', 'dist', 'data' )
+// Version-aware source paths (Memo 072 PRD-003): each namespace's promoted version is read from its
+// family head (<ns>/spec.json `currentVersion`) instead of a hardcoded literal, so a spec promotion
+// bump (0.1.0 → 0.2.0) is picked up automatically. Behaviour is identical while a head declares 0.1.0.
+const nsVersion = ( { ns } ) => {
+    const head = JSON.parse( readFileSync( path.resolve( SPEC_NS_ROOT, ns, 'spec.json' ), 'utf-8' ) )
+    return head.currentVersion
+}
+const nsDistDir = ( { ns, sub } ) => path.resolve( SPEC_NS_ROOT, ns, nsVersion( { ns } ), 'dist', sub )
+const MEMO_SPEC_DIR = nsDistDir( { ns: 'memo', sub: 'spec' } )
+const MEMO_DATA_DIR = nsDistDir( { ns: 'memo', sub: 'data' } )
+const WORKBENCH_PAYLOAD_SRC = nsDistDir( { ns: 'workbench', sub: 'spec' } )
+const WORKBENCH_DATA_DIR = nsDistDir( { ns: 'workbench', sub: 'data' } )
+const SESSION_PAYLOAD_SRC = nsDistDir( { ns: 'session', sub: 'spec' } )
+const SESSION_DATA_DIR = nsDistDir( { ns: 'session', sub: 'data' } )
 // The meta family's INTERNAL namespace/dir is `meta-spec` (Memo 064 MI-S7), and its published route
 // is now /meta-spec/ too (Memo 064 F5a: the standalone name "Specification" is retired; the family is
 // "Meta-Spec"). SOURCE dir, target content dir and slugRoot all align on `meta-spec`; the former
 // /spec/… URLs keep resolving via per-slug redirects (astro.config buildMetaSpecRedirects).
-const SPEC_META_PAYLOAD_SRC = path.resolve( SPEC_NS_ROOT, 'meta-spec', '0.1.0', 'dist', 'spec' )
-const SPEC_META_DATA_DIR = path.resolve( SPEC_NS_ROOT, 'meta-spec', '0.1.0', 'dist', 'data' )
+const SPEC_META_PAYLOAD_SRC = nsDistDir( { ns: 'meta-spec', sub: 'spec' } )
+const SPEC_META_DATA_DIR = nsDistDir( { ns: 'meta-spec', sub: 'data' } )
 const DIST_MANIFEST_JSON = path.resolve( SPEC_NS_ROOT, 'manifest.json' )
 
 // Memo 064 MI-T10 (F5=A): the core/memo family is served under /memo/ (was /specification/); the
