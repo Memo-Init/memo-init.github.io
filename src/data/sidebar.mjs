@@ -26,7 +26,7 @@ const MANIFEST_PATH = resolve( __dirname, 'manifest.json' )
 const loadGroupMeta = ( { family } ) => {
     const manifestPath = resolve( __dirname, `spec-manifest.${ family }.json` )
     if( !existsSync( manifestPath ) ) {
-        return { labels: {}, order: [] }
+        return { labels: {}, order: [], sort: {} }
     }
     try {
         const parsed = JSON.parse( readFileSync( manifestPath, 'utf8' ) )
@@ -35,13 +35,15 @@ const loadGroupMeta = ( { family } ) => {
             : []
         const labels = {}
         const order = []
+        const sort = {}
         groups.forEach( ( group ) => {
             labels[ group.id ] = group.label
             order.push( group.id )
+            if( typeof group.sort === 'string' ) sort[ group.id ] = group.sort
         } )
-        return { labels, order }
+        return { labels, order, sort }
     } catch {
-        return { labels: {}, order: [] }
+        return { labels: {}, order: [], sort: {} }
     }
 }
 
@@ -66,26 +68,30 @@ class SidebarLoader {
         const specItems = SidebarLoader.#buildSpecItems( {
             manifest,
             groupOrder: coreMeta.order,
-            groupLabels: coreMeta.labels
+            groupLabels: coreMeta.labels,
+            groupSort: coreMeta.sort
         } )
         const workbenchItems = SidebarLoader.#buildFamilyItems( {
             files: manifest.workbench?.files,
             slugRoot: 'workbench',
             groupOrder: workbenchMeta.order,
-            groupLabels: workbenchMeta.labels
+            groupLabels: workbenchMeta.labels,
+            groupSort: workbenchMeta.sort
         } )
         const sessionItems = SidebarLoader.#buildFamilyItems( {
             files: manifest.session?.files,
             slugRoot: 'session',
             groupOrder: sessionMeta.order,
-            groupLabels: sessionMeta.labels
+            groupLabels: sessionMeta.labels,
+            groupSort: sessionMeta.sort
         } )
         const specMetaItems = SidebarLoader.#buildFamilyItems( {
             files: manifest.spec?.files,
             // Manifest/data block key stays `spec`; the published route is /meta-spec/ (Memo 064 F5a).
             slugRoot: 'meta-spec',
             groupOrder: specMetaMeta.order,
-            groupLabels: specMetaMeta.labels
+            groupLabels: specMetaMeta.labels,
+            groupSort: specMetaMeta.sort
         } )
 
         return { specItems, workbenchItems, sessionItems, specMetaItems, specVersion, workbenchVersion, sessionVersion, specMetaVersion }
@@ -94,6 +100,16 @@ class SidebarLoader {
 
     static #versionOf( { value } ) {
         return typeof value === 'string' && value.length > 0 ? value : '0.0.0'
+    }
+
+
+    // Order a group's items. Default keeps the upstream by-chapter-number order (the file list is
+    // pre-sorted by file.order). A group whose spec-manifest carries `sort: "alpha"` is re-sorted by
+    // its display label in codepoint order — dotfiles first (e.g. `.browser/` before `context/`) — so
+    // a folder index renders as one clean alphabetical list instead of following chapter numbers.
+    static #orderItems( { items, sort } ) {
+        if( sort !== 'alpha' ) return items
+        return [ ...items ].sort( ( a, b ) => ( a.label < b.label ? -1 : ( a.label > b.label ? 1 : 0 ) ) )
     }
 
 
@@ -106,7 +122,7 @@ class SidebarLoader {
     }
 
 
-    static #buildSpecItems( { manifest, groupOrder, groupLabels } ) {
+    static #buildSpecItems( { manifest, groupOrder, groupLabels, groupSort = {} } ) {
         const files = Array.isArray( manifest.files ) ? manifest.files : []
         const sorted = [ ...files ].sort( ( a, b ) => a.order - b.order )
 
@@ -134,7 +150,7 @@ class SidebarLoader {
                 // Subcategories collapse by default; Starlight still auto-expands the group that
                 // contains the current page, so navigation opens only the active path (Memo 054 follow-up).
                 collapsed: true,
-                items: buckets[ key ]
+                items: SidebarLoader.#orderItems( { items: buckets[ key ], sort: groupSort[ key ] } )
             }
         } )
     }
@@ -143,7 +159,7 @@ class SidebarLoader {
     // Generic per-family grouped sidebar (workbench, sop). Groups files by
     // sidebar_group, orders groups by groupOrder (unknown keys appended), and renders
     // each file under slugRoot/<slug>.
-    static #buildFamilyItems( { files, slugRoot, groupOrder, groupLabels } ) {
+    static #buildFamilyItems( { files, slugRoot, groupOrder, groupLabels, groupSort = {} } ) {
         const list = Array.isArray( files ) ? files : []
         const sorted = [ ...list ].sort( ( a, b ) => a.order - b.order )
 
@@ -171,7 +187,7 @@ class SidebarLoader {
                 // Subcategories collapse by default; Starlight still auto-expands the group that
                 // contains the current page, so navigation opens only the active path (Memo 054 follow-up).
                 collapsed: true,
-                items: buckets[ key ]
+                items: SidebarLoader.#orderItems( { items: buckets[ key ], sort: groupSort[ key ] } )
             }
         } )
     }
