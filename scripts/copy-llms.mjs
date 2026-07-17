@@ -15,7 +15,7 @@
 // copy runs. A missing source aborts loudly — never a silent fallback to self-generation.
 
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
-import { existsSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 
@@ -35,14 +35,22 @@ const SPEC_NS_ROOT = path.resolve( SPEC_REPO_DIR )
 // Fixed family order — mirrors sync-spec.mjs and the refs.resolved.json key order. The meta family's
 // internal namespace/dir is `meta-spec` (Memo 064 MI-S7); the published /llms.txt URL is unchanged.
 const FAMILIES = [ 'memo', 'workbench', 'session', 'meta-spec' ]
-const SPEC_VERSION = '0.1.0'
+
+// Version-aware (Memo 076): each family's published version is read from its family head
+// (<ns>/spec.json `currentVersion`) — the SAME dynamic resolution sync-spec.mjs uses — so a spec
+// version bump (e.g. 0.2.0 -> 0.3.0) is picked up without editing this script. A hardcoded version
+// literal was the drift that pinned /llms.txt to 0.1.0 while the HTML docs advanced.
+const nsVersion = ( { family } ) => {
+    const head = JSON.parse( readFileSync( path.resolve( SPEC_NS_ROOT, family, 'spec.json' ), 'utf-8' ) )
+    return head.currentVersion
+}
 
 const PUBLIC_DIR = path.resolve( REPO_ROOT, 'public' )
 const OUTPUT_BUNDLE = path.join( PUBLIC_DIR, 'llms.txt' )
 
 
 const familyBundlePath = ( { family } ) => {
-    return path.resolve( SPEC_NS_ROOT, family, SPEC_VERSION, 'dist', 'generated', 'llms.txt' )
+    return path.resolve( SPEC_NS_ROOT, family, nsVersion( { family } ), 'dist', 'generated', 'llms.txt' )
 }
 
 
